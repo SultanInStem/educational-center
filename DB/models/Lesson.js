@@ -15,7 +15,8 @@ const LesssonSchema = new mongoose.Schema({
         default: '' // set up default url to thumbnail in AWS if it was not provided
     },
     files: {
-        type: Array
+        type: Array,
+        default: []
     },
     videos: {
         russian: {
@@ -32,7 +33,8 @@ const LesssonSchema = new mongoose.Schema({
         type: Array
     },
     homework: {
-        type: Array // here we will store id's of questions 
+        type: Array, // here we will store id's of questions ,
+        default: []
     }
 })
 

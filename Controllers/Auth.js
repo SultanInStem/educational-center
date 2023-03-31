@@ -3,7 +3,7 @@ const joi = require('joi')
 const {createAccessToken, createRefreshToken} = require('../tokens/generateTokens')
 const {StatusCodes} = require('http-status-codes')
 const {getTime} = require('../helperFuncs/getTime')
-
+const Level = require('../DB/models/Level')
 
 const SignUp = async(req, res, next) =>{
     const signupSchema = joi.object({
@@ -57,9 +57,21 @@ const Login = async(req, res, next) =>{
         if(!isMatch) return res.status(StatusCodes.BAD_REQUEST).json({err: 'password in incorrect'})
         const accessToken = createAccessToken(user._id)
         const refreshToken = createRefreshToken(user._id) 
-        // in the future, we will fetch and send more than just tokens.  
-        // update user active status and set lastActive 
-        return res.status(StatusCodes.OK).json({accessToken, refreshToken})
+        const lastActive = getTime()
+        await User.findOneAndUpdate({_id: user._id}, {lastActive, isActive: true})
+        const filteredUser = {
+            profilePicture: user.profilePicture, 
+            name: user.name,
+            progressScore: user.progressScore,
+            level: user.level
+        }
+        const levels = await Level.find() // you might wanna leave out lesson array
+        return res.status(StatusCodes.OK).json({
+            accessToken, 
+            refreshToken, 
+            user: filteredUser, 
+            levels
+        })
     }catch(err){
         return next(err)
     }
