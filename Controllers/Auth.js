@@ -33,7 +33,8 @@ const SignUp = async(req, res, next) =>{
             lastActive: lastActive
         })
         const accessToken = createAccessToken(user._id)
-        const refreshToken = createRefreshToken(user._id)   
+        const refreshToken = createRefreshToken(user._id)  
+        console.log(user) 
         return res.status(StatusCodes.OK).json({accessToken, refreshToken, user}) // remove user later
     }catch(err){
         return next(err)
@@ -57,12 +58,12 @@ const Login = async(req, res, next) =>{
         const accessToken = createAccessToken(user._id)
         const refreshToken = createRefreshToken(user._id) 
         // in the future, we will fetch and send more than just tokens.  
+        // update user active status and set lastActive 
         return res.status(StatusCodes.OK).json({accessToken, refreshToken})
     }catch(err){
         return next(err)
     }
 }
-
 
 
 module.exports = {

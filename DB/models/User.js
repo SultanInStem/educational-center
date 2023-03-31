@@ -33,8 +33,7 @@ const UserSchema = new mongoose.Schema({
     },
     lastActive: {
         type: Date,
-        required: true,
-        default: Date.now()
+        required: true
     },
     isActive: {
         type: Boolean,
