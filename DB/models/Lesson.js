@@ -11,7 +11,6 @@ const LesssonSchema = new mongoose.Schema({
     },
     thumbNail: {
         type: String,
-        required: true,
         default: '' // set up default url to thumbnail in AWS if it was not provided
     },
     files: {

@@ -1,7 +1,19 @@
 const {StatusCodes} = require('http-status-codes')
+const jwt = require('jsonwebtoken')
+
+
 const authenticate = async (req, res, next) => {
-    try{
-        next()
+    const authHead = req.headers.authorization 
+    if(!authHead || !authHead.startsWith("Bearer")) return res.status(StatusCodes.BAD_REQUEST).json({err: 'not authenticated'})
+    const token = authHead.split(' ')
+    if(!token) return res.status(StatusCodes.BAD_REQUEST).json({err: 'not authenticated'})
+    try{    
+        jwt.verify(token, process.env.JWT_ACCESS_KEY, (err, decoded) =>{
+            if(err) return res.status(StatusCodes.BAD_REQUEST).json({err: 'token is expired'})
+            const userId = decoded.userId
+            req.userId
+            next()
+        })
     }catch(err){
         return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({err: 'Something went wrong in middleware'})
     }
