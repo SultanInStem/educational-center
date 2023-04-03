@@ -22,11 +22,12 @@ app.use('/api/v1', LessonRouter)
 
 app.use(ErrorHandler)
 app.use(NotFound)
-const start = async() =>{
+
+const Level = require('./DB/models/Level')
+const start = async() =>{ // left off here 
     try{
-        // app.listen(port, '192.168.0.135')
+        await connect(process.env.MONGO_URI)    
         app.listen(port, () => console.log('server is up and running'))
-        await connect(process.env.MONGO_URI)
     }
     catch(err){
         console.log(err)

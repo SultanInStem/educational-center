@@ -77,8 +77,23 @@ const Login = async(req, res, next) =>{
     }
 }
 
+const checkIfRegistered = async(req, res, next) =>{
+    try{
+        const {email} = req.body
+        if(!email) return res.status(StatusCodes.BAD_REQUEST).json({err: 'provide email please'})
+        const user = await User.findOne({email})
+        if(user){
+            return res.status(StatusCodes.OK).json({msg: 'user found'})
+        }else{
+            return res.status(StatusCodes.NOT_FOUND).json({err: 'user not found'})
+        }
+    }catch(err){
+        return next(err)
+    }
+}
 
 module.exports = {
     SignUp,
-    Login
+    Login,
+    checkIfRegistered
 }

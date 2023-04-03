@@ -31,18 +31,6 @@ const getAllLessons = async (req, res, next) => { // for users and admins
     }
 }
 
-const createLesson = async(req, res, next) => { // only for admins 
-    const {files} = req
-    const jsonData = JSON.parse(req.body.jsonData)
-    console.log(files)
-    console.log(jsonData)
-    try{
-        
-        return res.status(StatusCodes.OK).json({msg: 'no changes have been made'})
-    }catch(err){
-        return next(err)
-    }
-}
 
 const deleteLesson = async(req, res, next) => { // only for admins 
 
@@ -54,6 +42,5 @@ const editLesson = async (req, res, next) => {
 
 module.exports = {
     getAllLessons,
-    createLesson,
     deleteLesson
 }

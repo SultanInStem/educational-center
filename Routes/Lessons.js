@@ -1,6 +1,6 @@
 const express = require('express')
 const router = express.Router()
-const {createLesson, getAllLessons, deleteLesson} = require('../Controllers/Lessons')
+const {getAllLessons, deleteLesson} = require('../Controllers/Lessons')
 const authenticate = require('../middleware/authenticate')
 const multer = require('multer') 
 const {S3} = require('@aws-sdk/client-s3')
@@ -9,7 +9,9 @@ const genKey = require('../helperFuncs/genS3Key')
 const { StatusCodes } = require('http-status-codes')
 const Level = require('../DB/models/Level')
 const Lesson = require('../DB/models/Lesson')
+const mongoose = require('mongoose')
 const joi = require('joi')
+const isAdmin = require('../helperFuncs/checkIfAdmin')
 const s3 = new S3({
     credentials: {
         accessKeyId: process.env.AWS_ACCESS_KEY,
@@ -34,85 +36,71 @@ const upload = multer({
 })
 
 
-router.get('/lessons', getAllLessons) // later on add authentication here 
+router.get('/lessons', authenticate, getAllLessons) // later on add authentication here 
 
-router.post('/lessons/videoLang', upload.fields(
+
+
+
+router.post('/lessons/english', [authenticate, upload.fields(
     [
-        {name: 'videoEnglish', maxCount: 1},
-        {name: 'videoRussian', maxCount: 1},
-        {name: 'videoUzbek', maxCount: 1},
+        {name: 'video', maxCount: 1},
         {name: 'lessonImage', maxCount: 1},
         {name: 'jsonData'}
-    ]), async(req, res, next) =>{
-    // check if the user is admin later 
-
-    // we will upload homework later on in the seperate request 
-    if(!req.files) return res.status(StatusCodes.BAD_REQUEST).json({err: 'bad request'}) 
+    ])], async(req, res, next) =>{
+    const admin = await isAdmin(req.userId)
+    console.log('isAdmin', isAdmin)
+    if(admin === false) return res.status(StatusCodes.BAD_REQUEST).json({err: 'you are not allowed to modify this resource'})         
+    if(!req.files || !req.files.video[0] || !req.body.jsonData) return res.status(StatusCodes.BAD_REQUEST).json({err: 'bad request'}) 
     const jsonData = JSON.parse(req.body.jsonData)
-    const {lang} = req.query
+    const video = req.files.video[0]
     const JsonDataValidationForm = joi.object({
         title: joi.string().max(40).min(1),
         description: joi.string().min(1).max(80),
-        level: joi.string().min(5).max(20).uppercase()
+        level: joi.string().valid('BEGINNER',
+        'ELEMENTARY', 
+        'PRE-INTERMEDIATE',
+        'INTERMEDIATE', 
+        'UPPER-INTERMEDIATE', 
+        'IELTS').min(5).max(20)
     })
+    let thumbNail = ''
+    if(req.files.lessonImage[0]){
+        thumbNail = req.files.lessonImage[0]
+    }
     const {error, value} = JsonDataValidationForm.validate(jsonData)
-    if(error){
-        return next(error)
-    }
+    if(error) return next(error)
+    const session = await mongoose.startSession()
     try{
-        let mongoVideoObject = {}
-        let levelMongoDb = {}
-        switch(lang){
-            case 'english':
-            if(!req.files.videoEnglish[0]) return res.status(StatusCodes.BAD_REQUEST).json({err: 'bad request, file does not exist'})
-            const video = req.files.videoEnglish[0] 
-
-            // check if image file exists 
-            mongoVideoObject = await Lesson.create({
-                title: value.title,
-                description: value.description,
+        const transaction = await session.withTransaction(async() =>{
+            const lesson = await Lesson.create({
+                title: value.title, 
+                description: value.description, 
+                thumbNail,
                 videos: {
-                english: video.key 
+                    english: video.key
                 }
             })
-                // console.log(video)
-                // console.log(mongoVideoObject)
-            levelMongoDb = await Level.findOneAndUpdate({level: value.level}, {
-                $push: {lessons: mongoVideoObject._id}
-            }, {new: true})
-            console.log(mongoVideoObject, levelMongoDb)
-            return res.status(StatusCodes.OK).json({msg: 'success'})
-            case 'russian': 
-            if(!req.files.videoRussian[0] || !req.files.videoUzbek[0]) return res.status(StatusCodes.BAD_REQUEST).json({err: 'file is missing'})
-            const videoUzb = req.files.videoUzbek[0]
-            const videoRus = req.files.videoRussian[0]
-
-            mongoVideoObject = await Lesson.create({
-                title: value.title,
-                description: value.description,
-                videos: {
-                    russian: videoRus.key,
-                    uzbek: videoUzb.key
-                }
-            })
-
-            levelMongoDb = await Level.findOneAndUpdate({
-                level: value.level
-            }, {
-                $push: {lessons: mongoVideoObject._id}
-            }, {new: true})
-            console.log(mongoVideoObject, levelMongoDb)
-            return res.status(StatusCodes.OK).json({msg: 'success'})
-            default:
-            return res.status(StatusCodes.BAD_REQUEST).json({err: 'provide the language'})
+            const level = await Level.findOneAndUpdate({level: value.level}, {$push: {lessons: lesson._id}}, {session})
+            if(!level){
+                await session.abortTransaction()
+                return res.status(StatusCodes.NOT_FOUND).json({err: 'something went wrong'})
+            }
+            return {level, lesson}
+        })
+        if(!transaction){
+            return res.status(StatusCodes.BAD_REQUEST).json({err: 'something went wrong'})
         }
+        return res.status(StatusCodes.CREATED).json({msg: 'lesson has been created'})
     }catch(err){
+        await session.abortTransaction()
         return next(err)
+    }finally{
+        await session.endSession()
+        await mongoose.disconnect()
     }
-
 })
 
 
-router.delete('/lessons/:id') // think about implementing delete functionality 
+router.delete('/lessons/:id') 
 
 module.exports = router
