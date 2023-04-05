@@ -54,7 +54,7 @@ const Login = async(req, res, next) =>{
         const user = await User.findOne({email})
         if(!user) return next({notFound: true})
         const isMatch = await user.CheckPassword(password)
-        if(!isMatch) return res.status(StatusCodes.BAD_REQUEST).json({err: 'password in incorrect'})
+        if(!isMatch) return res.status(StatusCodes.BAD_REQUEST).json({err: 'password is incorrect'})
         const accessToken = createAccessToken(user._id)
         const refreshToken = createRefreshToken(user._id) 
         const lastActive = getTime()
