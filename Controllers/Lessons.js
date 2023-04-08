@@ -13,7 +13,7 @@ const s3 = new S3({
         accessKeyId: process.env.AWS_ACCESS_KEY,
         secretAccessKey: process.env.AWS_SECRET_KEY 
     },
-    region: 'us-east-1'
+    region: process.env.AWS_REGION
 })
 
 const CloudFront = new CloudFrontClient({
@@ -21,8 +21,9 @@ const CloudFront = new CloudFrontClient({
         accessKeyId: process.env.AWS_ACCESS_KEY, 
         secretAccessKey: process.env.AWS_SECRET_KEY
     },
-    region: 'us-east-1' // put env var later on 
+    region: process.env.AWS_REGION
 })
+
 
 async function verifyUserProgress(userId, level){
     try{
@@ -96,5 +97,5 @@ const editLesson = async (req, res, next) => {
 
 module.exports = {
     getAllLessons,
-    deleteLesson
+    deleteLesson,
 }

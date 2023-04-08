@@ -51,14 +51,14 @@ const Login = async(req, res, next) =>{
     }
     try{
         const {email, password} = value 
-        const user = await User.findOne({email})
+        const user = await User.findOne({email}) // update user here instead od doing it below 
         if(!user) return next({notFound: true})
         const isMatch = await user.CheckPassword(password)
         if(!isMatch) return res.status(StatusCodes.BAD_REQUEST).json({err: 'password is incorrect'})
         const accessToken = createAccessToken(user._id)
         const refreshToken = createRefreshToken(user._id) 
         const lastActive = getTime()
-        await User.findOneAndUpdate({_id: user._id}, {lastActive, isActive: true})
+        await User.findOneAndUpdate({_id: user._id}, {lastActive, isActive: true}) 
         const filteredUser = {
             profilePicture: user.profilePicture, 
             name: user.name,
@@ -69,8 +69,9 @@ const Login = async(req, res, next) =>{
         return res.status(StatusCodes.OK).json({
             accessToken, 
             refreshToken, 
-            user: filteredUser, 
-            levels
+            isAdmin: user.isAdmin,
+            score: user.progressScore,
+            level: user.level
         })
     }catch(err){
         return next(err)
@@ -83,9 +84,9 @@ const checkIfRegistered = async(req, res, next) =>{
         if(!email) return res.status(StatusCodes.BAD_REQUEST).json({err: 'provide email please'})
         const user = await User.findOne({email})
         if(user){
-            return res.status(StatusCodes.OK).json({msg: 'user found'})
+            return res.status(StatusCodes.BAD_REQUEST).json({isRegistered: true})  
         }else{
-            return res.status(StatusCodes.NOT_FOUND).json({err: 'user not found'})
+            return res.status(StatusCodes.OK).json({isRegistered: false})
         }
     }catch(err){
         return next(err)

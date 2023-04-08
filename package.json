@@ -13,6 +13,7 @@
     "@aws-sdk/client-cloudfront": "^3.303.0",
     "@aws-sdk/client-s3": "^3.299.0",
     "@aws-sdk/cloudfront-signer": "^3.303.0",
+    "@aws-sdk/s3-request-presigner": "^3.306.0",
     "bcryptjs": "^2.4.3",
     "cors": "^2.8.5",
     "crypto": "^1.0.1",
