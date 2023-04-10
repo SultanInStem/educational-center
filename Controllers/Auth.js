@@ -4,7 +4,7 @@ const {createAccessToken, createRefreshToken} = require('../tokens/generateToken
 const {StatusCodes} = require('http-status-codes')
 const {getTime} = require('../helperFuncs/getTime')
 const Level = require('../DB/models/Level')
-
+const jwt = require('jsonwebtoken')
 const SignUp = async(req, res, next) =>{
     const signupSchema = joi.object({
         name: joi.string().required().min(3),
@@ -13,7 +13,7 @@ const SignUp = async(req, res, next) =>{
         age: joi.number().required(),
         gender: joi.string().required(),
         level: joi.string().required().min(5).max(18),
-        score: joi.number().required().min(0).max(6) // getting score just for the convenience we could have calculated it here tho
+        score: joi.number().required().min(0).max(6) 
     })
     const {error, value} = signupSchema.validate(req.body)
     if(error){
@@ -51,7 +51,7 @@ const Login = async(req, res, next) =>{
     }
     try{
         const {email, password} = value 
-        const user = await User.findOne({email}) // update user here instead od doing it below 
+        const user = await User.findOne({email})
         if(!user) return next({notFound: true})
         const isMatch = await user.CheckPassword(password)
         if(!isMatch) return res.status(StatusCodes.BAD_REQUEST).json({err: 'password is incorrect'})
@@ -93,8 +93,31 @@ const checkIfRegistered = async(req, res, next) =>{
     }
 }
 
+const getNewToken = async(req, res, next) =>{
+    const headers = req.headers.authorization 
+    if(!headers || !headers.startsWith('Bearer ')) return res.status(StatusCodes.BAD_REQUEST).json({err: 'unauthenticated'})
+    const token = headers.split(' ')[1]
+    if(!token){
+        return res.status(StatusCodes.UNAUTHORIZED).json({err: 'unauthenticated'})
+    }
+    try{
+        jwt.verify(token, process.env.JWT_REFRESH_KEY, function(err, decoded){
+            if(err){
+                return res.status(StatusCodes.UNAUTHORIZED).json({err: 'unauthenticated'})
+            }
+            const accessToken = createAccessToken(decoded.userId)
+            const refreshToken = createRefreshToken(decoded.userId)
+            return res.status(StatusCodes.OK).json({accessToken, refreshToken})
+        })
+    }catch(err){
+        console.log(err)
+        return next(err)
+    }
+}
+
 module.exports = {
     SignUp,
     Login,
-    checkIfRegistered
+    checkIfRegistered,
+    getNewToken
 }

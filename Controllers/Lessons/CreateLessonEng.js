@@ -28,17 +28,54 @@ const CloudFront = new CloudFrontClient({
 
 
 const CreateLessonInEnglish = async(req, res, next) =>{
+    console.log(req.files)
     const uploadsFolder = path.join(__dirname, '..', '..', 'uploads')
+    let Aws_Video_Key = ''
+    let Aws_Image_Key = ''
     const session = await mongoose.startSession()
     let abortTransaction = false 
     try{
         const result = await verifyInputs(req)
         const {video, image, jsondata: {title, description, level}} = result 
-        await uploadVideoToS3(uploadsFolder, video)
-        return res.status(StatusCodes.OK).json({msg: 'oki'})
+        Aws_Video_Key = await uploadVideoToS3(uploadsFolder, video)
+        if(image){
+            Aws_Image_Key = await uploadImageToS3(uploadsFolder, image)
+        }
+        const transaction = await session.withTransaction(async()=>{
+            const lesson = await Lesson.create({
+                thumbNail: Aws_Image_Key,
+                title: title,
+                description,
+                videos: {
+                    english: Aws_Video_Key
+                }
+            })
+            if(!lesson){
+                abortTransaction = true 
+                return 
+            }
+            const course = await Level.findOneAndUpdate({level}, {$push:{lessons: lesson._id}}, {session})
+            if(!course){
+                abortTransaction = true 
+                return 
+            }
+            return {lesson,course}
+        })
+        if(!transaction){
+            abortTransaction = true 
+            return res.status(StatusCodes.BAD_REQUEST).json({err: 'transaction has been aborted'})
+        }
+        return res.status(StatusCodes.CREATED).json({msg: 'oki', transaction})
     }catch(err){ 
-        await deleteLocalFiles(uploadsFolder) // deletes files from ./uploads folder 
+        // delete files from s3 bucket in case of an error
+        abortTransaction = true 
         return next(err)
+    }finally{
+        if(!abortTransaction){
+            await session.commitTransaction()
+        }
+        await deleteLocalFiles(uploadsFolder) // delete all files from local folder regardless of the result 
+        await session.endSession()
     }
 }
 
@@ -58,11 +95,11 @@ async function verifyInputs(req){
     const uploadsFolder = path.join(__dirname, '..', '..', 'uploads')
     try{
         if(!req.body.jsondata) throw new Error('provide all credentials')
-        const jsondata = JSON.parse(req.body.jsondata)
+        const jsondata = await JSON.parse(req.body.jsondata)
         const joiSchema = joi.object({
             level: joi.string().valid(...levelRange).insensitive(),
-            title: joi.string().min(4).max(12),
-            description: joi.string().min(10)
+            title: joi.string().min(4).max(20),
+            description: joi.string().min(5)
         })
         const {error, value} = joiSchema.validate(jsondata)
         if(error){
@@ -85,7 +122,7 @@ async function verifyInputs(req){
                         result.image = item  
                     }
                 })
-                if(!isVideoPresent){
+                if(isVideoPresent === false){
                     reject(new Error("video must be provided"))
                 }
               resolve(files); // pass the result to the callback function
@@ -147,9 +184,31 @@ async function uploadVideoToS3(folderPath, video){ // delete files from ./upload
         })
         const response = await s3.send(putCommand)
         console.log(response)
-        return response 
+        return key 
     }catch(err){
         console.log('uploadVideoToS3 Error', err)
+        throw err
+    }
+}
+async function uploadImageToS3(folderPath, image){
+    try{
+        const readStream = fs.createReadStream(path.join(folderPath, image))
+        const extension = image.substr(image.lastIndexOf('.')).slice(1)
+        const key = genKey() + `.${extension}`
+
+        readStream.on('error', (err) => console.log(err))
+
+        const putCommand = new PutObjectCommand({
+            Bucket: BUCKET_NAME,
+            Key: key,
+            Body: readStream,
+            ContentType: extension
+        })
+        const response = await s3.send(putCommand)
+        console.log(response)
+        return key 
+    }catch(err){
+        console.log(err)
         throw err
     }
 }

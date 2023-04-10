@@ -100,6 +100,7 @@ const dataSchemaEnglish = [{name: 'video', maxCount: 1}, {name: 'image', maxCoun
 //             await session.endSession()
 //         }
 // })
+
 router.post('/english', upload.fields(dataSchemaEnglish), CreateLessonInEnglish)    
 router.delete('/:id') 
 router.get('/:level', authenticate, getAllLessons) 

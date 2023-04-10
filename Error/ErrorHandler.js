@@ -3,7 +3,6 @@ const mongoose = require('mongoose')
 const joi = require('joi')
 const { MulterError } = require('multer')
 const ErrorHandler = (err, req, res, next) =>{
-    console.log('IT WORKS')
     // later handle mongo errors as well
     if(err instanceof mongoose.Error){
         let code = err.code 
@@ -20,6 +19,6 @@ const ErrorHandler = (err, req, res, next) =>{
     if(err instanceof joi.ValidationError){
         console.log('JOI ERROR')
     }
-    return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({err: 'Something went wrong'})
+    return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({err: err.message ? err.message : 'Something went wrong'})
 }
 module.exports = ErrorHandler
