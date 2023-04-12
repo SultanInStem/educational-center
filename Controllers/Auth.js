@@ -5,6 +5,7 @@ const {StatusCodes} = require('http-status-codes')
 const {getTime} = require('../helperFuncs/getTime')
 const Level = require('../DB/models/Level')
 const jwt = require('jsonwebtoken')
+const {Unauthorized} = require('../Error/ErrorSamples')
 const SignUp = async(req, res, next) =>{
     const signupSchema = joi.object({
         name: joi.string().required().min(3),
@@ -81,7 +82,11 @@ const Login = async(req, res, next) =>{
 const checkIfRegistered = async(req, res, next) =>{
     try{
         const {email} = req.body
-        if(!email) return res.status(StatusCodes.BAD_REQUEST).json({err: 'provide email please'})
+        const joiSchema = joi.object({
+            email: joi.string().email().min(7)
+        })
+        const {error, value} = joiSchema.validate(req.body)
+        if(error) return next(error)
         const user = await User.findOne({email})
         if(user){
             return res.status(StatusCodes.BAD_REQUEST).json({isRegistered: true})  
@@ -94,16 +99,16 @@ const checkIfRegistered = async(req, res, next) =>{
 }
 
 const getNewToken = async(req, res, next) =>{
-    const headers = req.headers.authorization 
-    if(!headers || !headers.startsWith('Bearer ')) return res.status(StatusCodes.BAD_REQUEST).json({err: 'unauthenticated'})
-    const token = headers.split(' ')[1]
-    if(!token){
-        return res.status(StatusCodes.UNAUTHORIZED).json({err: 'unauthenticated'})
-    }
     try{
+        const headers = req.headers.authorization 
+        if(!headers || !headers.startsWith('Bearer ')) throw new Unauthorized('You are not unthorized')
+        const token = headers.split(' ')[1]
+        if(!token){
+            throw new Unauthorized('You are not unauthorized')
+        }
         jwt.verify(token, process.env.JWT_REFRESH_KEY, function(err, decoded){
             if(err){
-                return res.status(StatusCodes.UNAUTHORIZED).json({err: 'unauthenticated'})
+                throw new Unauthorized('Access Token is Expired')
             }
             const accessToken = createAccessToken(decoded.userId)
             const refreshToken = createRefreshToken(decoded.userId)

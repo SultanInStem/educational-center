@@ -1,5 +1,5 @@
-const {S3, PutObjectCommand} = require('@aws-sdk/client-s3')
-const  {CloudFrontClient} = require('@aws-sdk/client-cloudfront')
+const {S3, PutObjectCommand, DeleteObjectCommand} = require('@aws-sdk/client-s3')
+const  {CloudFrontClient, CreateInvalidationCommand} = require('@aws-sdk/client-cloudfront')
 const { StatusCodes } = require('http-status-codes')
 const fs = require('fs')
 const joi = require('joi')
@@ -8,7 +8,7 @@ const mongoose = require('mongoose')
 const Lesson = require('../../DB/models/Lesson')
 const Level = require('../../DB/models/Level')
 const path = require('path')
-
+const {BadRequest} = require('../../Error/ErrorSamples')
 const BUCKET_NAME = process.env.AWS_BUCKET_NAME     
 const s3 = new S3({
     credentials: {
@@ -28,11 +28,11 @@ const CloudFront = new CloudFrontClient({
 
 
 const CreateLessonInEnglish = async(req, res, next) =>{
-    console.log(req.files)
     const uploadsFolder = path.join(__dirname, '..', '..', 'uploads')
     let Aws_Video_Key = ''
     let Aws_Image_Key = ''
     const session = await mongoose.startSession()
+    session.startTransaction()
     let abortTransaction = false 
     try{
         const result = await verifyInputs(req)
@@ -41,40 +41,41 @@ const CreateLessonInEnglish = async(req, res, next) =>{
         if(image){
             Aws_Image_Key = await uploadImageToS3(uploadsFolder, image)
         }
-        const transaction = await session.withTransaction(async()=>{
-            const lesson = await Lesson.create({
-                thumbNail: Aws_Image_Key,
-                title: title,
-                description,
-                videos: {
-                    english: Aws_Video_Key
-                }
-            })
-            if(!lesson){
-                abortTransaction = true 
-                return 
-            }
-            const course = await Level.findOneAndUpdate({level}, {$push:{lessons: lesson._id}}, {session})
-            if(!course){
-                abortTransaction = true 
-                return 
-            }
-            return {lesson,course}
-        })
-        if(!transaction){
-            abortTransaction = true 
-            return res.status(StatusCodes.BAD_REQUEST).json({err: 'transaction has been aborted'})
+        const queryLevel = level.toUpperCase()
+        const lesson = new Lesson({
+            thumbNail: Aws_Image_Key,
+            title: title,
+            description,
+            videos: {
+                english: Aws_Video_Key
+            },
+            level: queryLevel
+        }) 
+        const uploadedLesson = await lesson.save({session})
+        if(!uploadedLesson){
+            throw new mongoose.Error('mongo error')
         }
-        return res.status(StatusCodes.CREATED).json({msg: 'oki', transaction})
+        const course = await Level.findOneAndUpdate({level: queryLevel}, {$push: {lessons: lesson._id}}, {session}) 
+        if(!course){
+            throw new mongoose.Error("mongo error")
+        }
+        const transaction = await session.commitTransaction()
+        return res.status(StatusCodes.CREATED).json({msg: 'Lesson has been created successfuly', status: "oki ;)"}) 
     }catch(err){ 
-        // delete files from s3 bucket in case of an error
+        if(Aws_Video_Key){
+            await deleteFromS3(Aws_Video_Key) // deletes files from s3 and invalidates cash in CDN
+        }
+        if(Aws_Image_Key){
+            await deleteFromS3(Aws_Image_Key) // deletes files from s3 and invalidates cash in CDN
+        }
         abortTransaction = true 
+        await deleteLocalFiles(uploadsFolder)
         return next(err)
     }finally{
-        if(!abortTransaction){
-            await session.commitTransaction()
+        if(abortTransaction){
+            await session.abortTransaction()
         }
-        await deleteLocalFiles(uploadsFolder) // delete all files from local folder regardless of the result 
+        await deleteLocalFiles(uploadsFolder) // delete all files from local folder 
         await session.endSession()
     }
 }
@@ -123,7 +124,7 @@ async function verifyInputs(req){
                     }
                 })
                 if(isVideoPresent === false){
-                    reject(new Error("video must be provided"))
+                    reject(new BadRequest('Video must be provided'))
                 }
               resolve(files); // pass the result to the callback function
             });
@@ -212,4 +213,43 @@ async function uploadImageToS3(folderPath, image){
         throw err
     }
 }
-module.exports = {CreateLessonInEnglish}
+async function invalidateCash(objectKey){
+    try{
+        const invalidateCommand = new CreateInvalidationCommand({
+            DistributionId: process.env.AWS_CLOUD_DISTRIBUTION_ID,
+            InvalidationBatch: {
+                CallerReference: objectKey,
+                Paths: {
+                    Quantity: 1,
+                    Items: [`/${objectKey}`]
+                }
+            }
+        })
+        const response = await CloudFront.send(invalidateCommand)
+        return response
+    }catch(err){
+        console.log(err)
+        throw err 
+    }
+}
+async function deleteFromS3(objectKey){
+    try{
+        const deleteCommand = new DeleteObjectCommand({
+            Bucket: BUCKET_NAME,
+            Key: objectKey
+        })
+        const response = await s3.send(deleteCommand)
+        const cloudResponse = await invalidateCash(objectKey) 
+        console.log(response, cloudResponse)
+        return response
+    }catch(err){
+        console.log(err)
+        throw err
+    }
+}
+module.exports = {
+    CreateLessonInEnglish,
+    deleteLocalFiles, 
+    deleteFromS3, 
+    invalidateCash
+}

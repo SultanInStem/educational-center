@@ -69,9 +69,3 @@ UserSchema.methods.CheckPassword = async function(password){
 const User = mongoose.model('users', UserSchema)
 
 module.exports = User
-
-
-// axios.post('/completed, {level: 'Begginner", lessonId: '123'})
-// how many lessons does beginner have 
-// 1 / 20 = 0.05 
-// minScore = 0.1 out of 6

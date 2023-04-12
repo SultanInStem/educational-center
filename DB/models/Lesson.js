@@ -34,6 +34,9 @@ const LesssonSchema = new mongoose.Schema({
     homework: {
         type: Array, // here we will store id's of questions ,
         default: []
+    },
+    level: {
+        type: String
     }
 })
 

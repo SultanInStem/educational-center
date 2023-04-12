@@ -1,6 +1,6 @@
 const express = require('express')
 const router = express.Router()
-const {postImage, getImages} = require('../Controllers/test')
+const {postImage, getImage} = require('../Controllers/test')
 const multer = require('multer')
 const path = require('path')
 const storage = multer.diskStorage({
@@ -15,5 +15,5 @@ const upload = multer({storage})
 const formDataFields = [{name: 'video', maxCount: 1}, {name: 'image', maxCount: 1}]
 
 router.post('/test/english', upload.fields(formDataFields), postImage)
-router.get('/test', getImages)
+router.post('/test', getImage)
 module.exports = router
