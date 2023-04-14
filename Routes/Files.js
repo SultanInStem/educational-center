@@ -2,6 +2,7 @@ const express = require('express')
 const router = express.Router()
 const multer = require('multer')
 const path = require('path')
+const verifyAdmin = require('../middleware/verifyAdmin')
 const { uploadLessonFiles } = require('../Controllers/files/uploadFiles')
 const storage = multer.diskStorage({
     destination: function(req, file, cb){
@@ -14,7 +15,9 @@ const storage = multer.diskStorage({
 })
 const upload = multer({storage})
 
-router.post('/', upload.array('files'), uploadLessonFiles)
+router.post('/', [verifyAdmin, upload.array('files')], uploadLessonFiles)
+
+
 router.post('/howework')
 
 

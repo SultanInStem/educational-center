@@ -37,7 +37,7 @@ const ErrorHandler = (err, req, res, next) =>{
 
     }else if(err instanceof CustomError){
 
-        console.log('Custome Error')
+        console.log('Custom Error')
         return res.status(err.statusCode).json({err: err.message})
 
     }else if(err.name === 'InvalidAccessKeyId'){

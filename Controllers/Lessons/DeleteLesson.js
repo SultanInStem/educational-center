@@ -50,15 +50,18 @@ const DeleteLesson = async (req, res, next) =>{
         })
         Object.entries(files).forEach(item =>{
             if(item[1]){
-                tempFiles.push(item[1].aws_key)
+                tempFiles.push(item[1]['awsKey'])
             }
         })
         tempFiles.push(lesson.thumbNail)
+        console.log(tempFiles)
         for(const item of tempFiles){
-            const res_s3 = await deleteFromS3(item)
-            const res_cloud = await invalidateCash(item)
-            console.log(res_s3)
-            console.log(res_cloud)
+            if(item){
+                const res_s3 = await deleteFromS3(item)
+                const res_cloud = await invalidateCash(item)
+                // console.log(res_s3)
+                // console.log(res_cloud)
+            }
         }
         const transaction = await session.commitTransaction()
         console.log(transaction)

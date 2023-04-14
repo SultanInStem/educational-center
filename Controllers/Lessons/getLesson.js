@@ -13,7 +13,7 @@ const KEY_PAIR_ID = process.env.AWS_CLOUD_KEY_PAIR_ID
 
 const getLesson = async(req, res, next) =>{
     try{
-        const {level, lessonId} = req.query 
+        const {level, lessonId} = req.query // we need to know level to verify the progress and to improve the read speed with indexes in the future
         const userId = req.userId 
         const isValid = isLevelValid(level)
         const upperCaseLevel = level.toUpperCase()
@@ -26,16 +26,15 @@ const getLesson = async(req, res, next) =>{
         const lesson = await Lesson.findOne({_id: lessonId, level: upperCaseLevel})
         if(!lesson) throw new NotFound('Lesson Not Found')
         const {videos, title, description, homework, files, thumbNail} = lesson 
-        lesson.thumbNail = getUrl(thumbNail)
+        lesson.thumbNail = getUrl(thumbNail) 
         Object.entries(videos).forEach(item =>{
-            // console.log(item)
             if(item[1]){
                 videos[item[0]] = getUrl(item[1])
             }
         })
         Object.entries(files).forEach(item =>{
             if(item[1]){
-                const key = item[1].aws_key
+                const key = item[1].awsKey
                 const url = getUrl(key)
                 console.log(url)
                 item[1]['url'] = url 

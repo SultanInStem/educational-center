@@ -45,19 +45,21 @@ const getAllLessons = async (req, res, next) => {
     try{
         const lessonArray = []
         for(const item of lessons){
-            const lesson = await Lesson.findById(item._id)
-            const temp = {
-                title: lesson.title,
-                description: lesson.description,
-                id: lesson._id,
+            const lesson = await Lesson.findOne({_id: item, level: level})
+            if(lesson){
+                const temp = {
+                    title: lesson.title,
+                    description: lesson.description,
+                    id: lesson._id,
+                }
+                temp.image = getSignedUrl({
+                    url: process.env.AWS_CLOUD_DOMAIN + `/${lesson.thumbNail}`,
+                    privateKey: PRIVATE_KEY,
+                    keyPairId: KEY_PAIR_ID,
+                    dateLessThan: new Date(Date.now() + 1000 * 60 * 60 * 36)
+                }) 
+                lessonArray.push(temp)
             }
-            temp.image = getSignedUrl({
-                url: process.env.AWS_CLOUD_DOMAIN + `/${lesson.thumbNail}`,
-                privateKey: PRIVATE_KEY,
-                keyPairId: KEY_PAIR_ID,
-                dateLessThan: new Date(Date.now() + 1000 * 60 * 60 * 24)
-            }) 
-            lessonArray.push(temp)
         } 
         return res.status(StatusCodes.OK).json({lessons: lessonArray})
     }catch(err){

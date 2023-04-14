@@ -8,6 +8,7 @@ const ErrorHandler = require('./Error/ErrorHandler')
 const AuthRouter = require('./Routes/Auth')
 const LessonRouter = require('./Routes/Lessons')
 const FilesRouter = require('./Routes/Files')
+const HomeworkRouter = require('./Routes/Homework')
 
 const cors = require('cors')
 const {NotFound} = require('./Error/NotFound')
@@ -23,12 +24,14 @@ app.get('/', (req,res) => {
 app.use('/api/v1', AuthRouter)
 app.use('/api/v1/lessons', LessonRouter)
 app.use('/api/v1/files', FilesRouter)
+app.use('/api/v1/lessons/homework', HomeworkRouter)
 
 app.use(ErrorHandler)
 app.use(NotFound)
+
 const start = async() =>{  
     try{
-        await connect(process.env.MONGO_URI)    
+        await connect(process.env.MONGO_URI)
         app.listen(port, () => console.log('server is up and running'))
     }
     catch(err){

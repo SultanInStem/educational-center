@@ -45,17 +45,17 @@ const uploadLessonFiles = async (req, res, next)=>{
 
         modifiedFiles = files.map(item =>{
             let key = (genKey() + item.originalname)
-            key = key.replace(/[-\s]+/g, '')
+            key = key.replace(/[^a-zA-Z0-9]/g, '')
             return {
                 originalname: item.originalname,
-                aws_key: key,
+                awsKey: key,
                 mimetype: item.mimetype 
             }
         })
         for(let i = 0; i < modifiedFiles.length; i++){
             const file = {
                 name: modifiedFiles[i].originalname,
-                awsKey: modifiedFiles[i].aws_key
+                awsKey: modifiedFiles[i].awsKey
             }
             lesson.files.push(file) 
             const response = await uploadToS3(folderPath, modifiedFiles[i])
@@ -63,7 +63,7 @@ const uploadLessonFiles = async (req, res, next)=>{
         }
         const updatedLesson = await Lesson.findOneAndUpdate({_id: lessonId}, lesson, {new: true})
         if(!updatedLesson) throw new BadRequest('Failed to updated the lesson')
-        return res.status(StatusCodes.CREATED).json({msg: 'files have been uploaded'})
+        return res.status(StatusCodes.CREATED).json({msg: 'Files have been uploaded', success: true})
     }catch(err){
         await deleteCloudData(modifiedFiles)
         return next(err)
@@ -83,9 +83,10 @@ async function uploadToS3(folderpath, file){
         })
         const putCommand = new PutObjectCommand({
             Bucket: process.env.AWS_BUCKET_NAME,
-            Key: file.aws_key,
+            Key: file.awsKey,
             Body: readStream,
-            ContentType: file.mimetype 
+            ContentType: file.mimetype,
+            ContentDisposition: 'attachment'
         })
         const response = await s3.send(putCommand)
         return response 
@@ -98,7 +99,7 @@ async function uploadToS3(folderpath, file){
 async function deleteCloudData(arr){
     try{
         for(let i = 0; i < arr.length; i++){
-            const key = arr[i].aws_key
+            const key = arr[i].awsKey
             const res_s3 = await deleteFromS3(key)
             const res_cloud = await invalidateCash(key)
             console.log(res_s3)
@@ -143,7 +144,7 @@ async function invalidateCash(key){
 }
 
 async function validateInputs(folderPath){
-    const extensions = ['.pdf', 'docx', '.pptx', '.txt']
+    const extensions = ['.pdf', '.jpeg', '.png']
     try{
         const files = new Promise((resolve, reject) =>{
             fs.readdir(folderPath, (err, files) =>{
