@@ -1,4 +1,2 @@
-### TODO
-- create indexes for db 
-- set up controllers for homework 
-- test those controllers 
+### NOTES
+ - think about updating active status of a user everytime they make a request 

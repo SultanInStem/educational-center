@@ -14,7 +14,7 @@ const HwSchema = new mongoose.Schema({
         required: [true, "Correct Answer is required"]
     },
     lessonId: {
-        type: mongoose.Types.ObjectId,
+        type: mongoose.Types.ObjectId
     }
 })
 

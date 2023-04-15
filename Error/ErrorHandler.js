@@ -10,18 +10,26 @@ const ErrorHandler = (err, req, res, next) =>{
     console.log(err)
     if(err instanceof mongoose.Error){
 
-        console.log('Mongoose Error')
         const name = err.name 
         if(name === "CastError"){
             return res.status(StatusCodes.BAD_REQUEST).json({err: err.message}) 
+        }else if(name === 'ValidationError'){
+            let msg = ''
+            for(const item in err.errors){
+                if(err?.errors[item]?.properties?.message){
+                    msg = err?.errors[item]?.properties?.message
+                }
+            }
+            msg = msg ? msg : "ValidationError"
+            return res.status(StatusCodes.BAD_REQUEST).json({err: msg})
         }
         return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({err: 'mongoose error'})
 
     }else if(err instanceof MongoServerError){
 
-        console.log('MongoServerError')
         if(err.code === 11000){
-            return res.status(StatusCodes.BAD_REQUEST).json({err: 'Mongo Duplicate Error'})
+            const {keyValue} = err
+            return res.status(StatusCodes.BAD_REQUEST).json({err: 'Mongo Duplicate Error', ...keyValue})
         }
 
     }else if(err instanceof MulterError){
@@ -31,7 +39,6 @@ const ErrorHandler = (err, req, res, next) =>{
 
     }else if(err instanceof joi.ValidationError){
 
-        console.log('JOI Validation Error')
         let msg = err.details[0].message
         return res.status(StatusCodes.BAD_REQUEST).json({err: msg})
 

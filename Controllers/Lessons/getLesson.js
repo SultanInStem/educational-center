@@ -1,5 +1,3 @@
-const { CloudFrontClient } = require('@aws-sdk/client-cloudfront')
-const { S3, JSONType } = require('@aws-sdk/client-s3')
 const { getSignedUrl } = require('@aws-sdk/cloudfront-signer')
 const Lesson = require('../../DB/models/Lesson')
 const { BadRequest, Unauthorized, NotFound } = require('../../Error/ErrorSamples')
@@ -10,7 +8,7 @@ const { verifyUserProgress } = require('./GetAllLessons')
 const joi = require('joi')
 const PRIVATE_KEY = process.env.PRIVATE_KEY
 const KEY_PAIR_ID = process.env.AWS_CLOUD_KEY_PAIR_ID 
-
+const {levelsArray} = require('../../imports')
 const getLesson = async(req, res, next) =>{
     try{
         const {level, lessonId} = req.query // we need to know level to verify the progress and to improve the read speed with indexes in the future
@@ -49,7 +47,7 @@ const getLesson = async(req, res, next) =>{
 
 function isLevelValid(level){
     const validationSchema = joi.object({
-        level: joi.string().valid('beginner', 'elementary', 'pre-intermediate', 'intermediate', 'ielts').insensitive() 
+        level: joi.string().valid(...levelsArray).insensitive() 
     })
     const {error, value} = validationSchema.validate({level}) 
     if(error){

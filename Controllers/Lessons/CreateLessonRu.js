@@ -1,32 +1,25 @@
-const joi = require('joi')
+const {PutObjectCommand, DeleteObjectCommand} = require('@aws-sdk/client-s3')
+const {CreateInvalidationCommand} = require('@aws-sdk/client-cloudfront')
+const { BadRequest } = require('../../Error/ErrorSamples')
+const {deleteLocalFiles} = require('./CreateLessonEng')
+const isVideo = require('../../helperFuncs/isVideo')
+const isImage = require('../../helperFuncs/isImage')
+const genKey = require('../../helperFuncs/genS3Key')
+const { StatusCodes } = require('http-status-codes')
 const Lesson = require('../../DB/models/Lesson')
 const Level = require('../../DB/models/Level')
-const {S3, PutObjectCommand, DeleteObjectCommand} = require('@aws-sdk/client-s3')
-const { StatusCodes } = require('http-status-codes')
-const fs = require('fs')
-const path = require('path')
-const {deleteLocalFiles} = require('./CreateLessonEng')
-const {CloudFrontClient, CreateInvalidationCommand} = require('@aws-sdk/client-cloudfront')
-const { BadRequest } = require('../../Error/ErrorSamples')
 const mongoose = require('mongoose')
-const genKey = require('../../helperFuncs/genS3Key')
+const path = require('path')
+const joi = require('joi')
+const fs = require('fs')
+const {
+    s3, 
+    CloudFront, 
+    levelsArray, 
+} = require('../../imports')
+
 
 const uploadsFolderPath = path.join(__dirname, '..', '..', 'uploads')
-const s3 = new S3({
-    credentials: {
-        accessKeyId: process.env.AWS_ACCESS_KEY,
-        secretAccessKey: process.env.AWS_SECRET_KEY
-    },
-    region: process.env.AWS_REGION
-})
-const CloudFront = new CloudFrontClient({
-    credentials: {
-        accessKeyId: process.env.AWS_ACCESS_KEY,
-        secretAccessKey: process.env.AWS_SECRET_KEY
-    },
-    region: process.env.AWS_REGION
-})
-
 
 async function deleteFromS3(key){
     try{
@@ -74,22 +67,11 @@ async function deleteCloudFiles(key){
 }
 
 async function verifyInputs(req, folderPath){
-    const levelRange = ['beginner', 'elementary', 'pre-intermediate', 'intermediate','upper-intermediate', 'ielts']
     const jsondataValidation = joi.object({
-        level: joi.string().valid(...levelRange).insensitive(),
+        level: joi.string().valid(...levelsArray).insensitive(),
         title: joi.string().min(4).max(30),
         description: joi.string().min(5)
     })
-    function isImage(filename){
-        const imageFormats = ['.jpeg', '.jpg', '.png']
-        const extension = filename.substr(filename.lastIndexOf('.')).toLowerCase()
-        return imageFormats.includes(extension)
-    }
-    function isVideo(filename){
-        const videoFormats = ['.mov', '.mp4', '.avi']
-        const extension = filename.substr(filename.lastIndexOf('.')).toLowerCase()
-        return videoFormats.includes(extension)
-    }
     try{
         const {jsondata} = req.body
         if(!jsondata) throw BadRequest("Provide all of the essential information regarding the lesson")

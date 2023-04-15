@@ -31,6 +31,10 @@ const LesssonSchema = new mongoose.Schema({
     comments: {
         type: Array
     },
+    homeworkTimeOutMinutes: {
+        type: Number,
+        default: 15
+    },
     homework: {
         type: Array, // here we will store id's of questions ,
         default: []

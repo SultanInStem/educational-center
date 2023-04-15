@@ -1,5 +1,5 @@
-const {S3, PutObjectCommand, DeleteObjectCommand} = require('@aws-sdk/client-s3')
-const  {CloudFrontClient, CreateInvalidationCommand} = require('@aws-sdk/client-cloudfront')
+const {PutObjectCommand, DeleteObjectCommand} = require('@aws-sdk/client-s3')
+const  {CreateInvalidationCommand} = require('@aws-sdk/client-cloudfront')
 const { StatusCodes } = require('http-status-codes')
 const fs = require('fs')
 const joi = require('joi')
@@ -9,23 +9,10 @@ const Lesson = require('../../DB/models/Lesson')
 const Level = require('../../DB/models/Level')
 const path = require('path')
 const {BadRequest} = require('../../Error/ErrorSamples')
-const BUCKET_NAME = process.env.AWS_BUCKET_NAME     
-const s3 = new S3({
-    credentials: {
-        accessKeyId: process.env.AWS_ACCESS_KEY,
-        secretAccessKey: process.env.AWS_SECRET_KEY 
-    },
-    region: process.env.AWS_REGION
-})
-
-const CloudFront = new CloudFrontClient({
-    credentials: {
-        accessKeyId: process.env.AWS_ACCESS_KEY, 
-        secretAccessKey: process.env.AWS_SECRET_KEY
-    },
-    region: process.env.AWS_REGION
-})
-
+const BUCKET_NAME = process.env.AWS_BUCKET_NAME  
+const {s3, CloudFront, levelsArray} = require('../../imports')
+const isImage = require('../../helperFuncs/isImage')
+const isVideo = require('../../helperFuncs/isVideo')
 
 const CreateLessonInEnglish = async(req, res, next) =>{
     const uploadsFolder = path.join(__dirname, '..', '..', 'uploads')
@@ -82,23 +69,12 @@ const CreateLessonInEnglish = async(req, res, next) =>{
 
 async function verifyInputs(req){
     const result = {video: '', image: ''}
-    const levelRange = ['beginner', 'elementary', 'pre-intermediate', 'intermediate','upper-intermediate', 'ielts']
-    function isImage(filename){
-        const imageFormats = ['.jpeg', '.jpg', '.png']
-        const extension = filename.substr(filename.lastIndexOf('.')).toLowerCase()
-        return imageFormats.includes(extension)
-    }
-    function isVideo(filename){
-        const videoFormats = ['.mov', '.mp4', '.avi']
-        const extension = filename.substr(filename.lastIndexOf('.')).toLowerCase()
-        return videoFormats.includes(extension)
-    }
     const uploadsFolder = path.join(__dirname, '..', '..', 'uploads')
     try{
         if(!req.body.jsondata) throw new Error('provide all credentials')
         const jsondata = await JSON.parse(req.body.jsondata)
         const joiSchema = joi.object({
-            level: joi.string().valid(...levelRange).insensitive(),
+            level: joi.string().valid(...levelsArray).insensitive(),
             title: joi.string().min(4).max(20),
             description: joi.string().min(5)
         })
