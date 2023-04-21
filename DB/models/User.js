@@ -27,7 +27,7 @@ const UserSchema = new mongoose.Schema({
         required: true,
         minLength: 6
     },
-    progressScore: {
+    progressScore: { // reflects an overall score 
         type: Number,
         default: 0 
     },
@@ -42,10 +42,14 @@ const UserSchema = new mongoose.Schema({
     completedLessons: {
         type: Array,
         default: []
-    },
+    }, 
     completedLevels:{
         type: Array,
         default: []
+    },
+    currentScore: { // reflects the score in a certain course 
+        type: Number,
+        default: 0
     },
     isAdmin: {
         type: Boolean,

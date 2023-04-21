@@ -1,26 +1,26 @@
 const {PutObjectCommand, DeleteObjectCommand} = require('@aws-sdk/client-s3')
 const  {CreateInvalidationCommand} = require('@aws-sdk/client-cloudfront')
-const { StatusCodes } = require('http-status-codes')
-const fs = require('fs')
-const joi = require('joi')
-const genKey = require('../../helperFuncs/genS3Key')
-const mongoose = require('mongoose')
-const Lesson = require('../../DB/models/Lesson')
-const Level = require('../../DB/models/Level')
-const path = require('path')
-const {BadRequest} = require('../../Error/ErrorSamples')
-const BUCKET_NAME = process.env.AWS_BUCKET_NAME  
 const {s3, CloudFront, levelsArray} = require('../../imports')
+const {BadRequest} = require('../../Error/ErrorSamples')
+const { StatusCodes } = require('http-status-codes')
+const genKey = require('../../helperFuncs/genS3Key')
 const isImage = require('../../helperFuncs/isImage')
 const isVideo = require('../../helperFuncs/isVideo')
+const Lesson = require('../../DB/models/Lesson')
+const Level = require('../../DB/models/Level')
+const mongoose = require('mongoose')
+const path = require('path')
+const joi = require('joi')
+const fs = require('fs')
+const { isFloat32Array } = require('util/types')
+const BUCKET_NAME = process.env.AWS_BUCKET_NAME  
+const uploadsFolder = path.join(__dirname, '..', '..', 'uploads')
 
 const CreateLessonInEnglish = async(req, res, next) =>{
-    const uploadsFolder = path.join(__dirname, '..', '..', 'uploads')
-    let Aws_Video_Key = ''
-    let Aws_Image_Key = ''
     const session = await mongoose.startSession()
     session.startTransaction()
     let abortTransaction = false 
+    const modifiedFiles = []
     try{
         const result = await verifyInputs(req)
         const {video, image, jsondata: {title, description, level}} = result 
@@ -67,46 +67,62 @@ const CreateLessonInEnglish = async(req, res, next) =>{
     }
 }
 
-async function verifyInputs(req){
-    const result = {video: '', image: ''}
-    const uploadsFolder = path.join(__dirname, '..', '..', 'uploads')
+const TestVerifyInputs = async (req, res, next) =>{
     try{
-        if(!req.body.jsondata) throw new Error('provide all credentials')
-        const jsondata = await JSON.parse(req.body.jsondata)
-        const joiSchema = joi.object({
-            level: joi.string().valid(...levelsArray).insensitive(),
-            title: joi.string().min(4).max(20),
-            description: joi.string().min(5)
-        })
-        const {error, value} = joiSchema.validate(jsondata)
+        const result = await verifyInputs(req)
+        console.log(result)
+        // console.log(req.files)
+        // const files = req.files 
+        // for(const item in files){
+        //     console.log(files[item])
+        //     if(files[item]){
+
+        //     }
+        // }
+        return res.status(StatusCodes.OK).json({msg: 'this is a test router'})
+    }catch(err){
+        console.log(err)
+        return next(err)
+    }
+}
+async function verifyInputs(req){
+    const joiSchema = joi.object({
+        level: joi.string().valid(...levelsArray).insensitive(),
+        title: joi.string().min(4).max(20),
+        description: joi.string().min(5)
+    })
+    try{
+        const {jsondata} = req.body 
+        if(!jsondata) throw new BadRequest("Provide all of the necessary information regarding the lssons")
+        const parsedJson = await JSON.parse(jsondata) 
+        const {error, value} = joiSchema.validate(parsedJson)
         if(error){
             console.log(error)
             throw error
         }
         const files = await new Promise((resolve, reject) => {
-            let isImagePresent = false 
-            let isVideoPresent = false 
             fs.readdir(uploadsFolder, function (err, files) {
               if(err){
                 reject(err); // pass the error to the callback function
               }
+              let imageNumber = 0 
+              let videoNumber = 0 
               files.forEach(item => {
-                  if(isVideo(item)){
-                      isVideoPresent = true 
-                      result.video = item 
+                    if(isVideo(item)){
+                      videoNumber += 1 
                     }else if(isImage(item)){
-                        isImagePresent = true
-                        result.image = item  
+                        imageNumber += 1 
                     }
                 })
-                if(isVideoPresent === false){
-                    reject(new BadRequest('Video must be provided'))
+                if(videoNumber !== 1){
+                    reject(new BadRequest(`One video is allowed, you provided ${videoNumber}`))
+                }else if(imageNumber > 1){
+                    reject(new BadRequest(`Only one video is allowed, you provided ${imageNumber}`))
                 }
               resolve(files); // pass the result to the callback function
             });
         });
-        result.jsondata = value 
-        return result 
+        return {files, jsondata: value}
     }catch(err){
         console.log('uploads folder', uploadsFolder)
         await deleteLocalFiles(uploadsFolder)
@@ -227,5 +243,6 @@ module.exports = {
     CreateLessonInEnglish,
     deleteLocalFiles, 
     deleteFromS3, 
-    invalidateCash
+    invalidateCash,
+    TestVerifyInputs
 }

@@ -40,9 +40,9 @@ const getAllLessons = async (req, res, next) => {
     const level = value.level.toUpperCase()
     const userId = req.userId 
     const isAllowed = await verifyUserProgress(userId, level)
-    if(!isAllowed) throw new Unauthorized('You are not authorized to access this resource')
-    const lessons = isAllowed.course.lessons  
     try{
+        if(!isAllowed) throw new Unauthorized('You are not authorized to access this resource')
+        const lessons = isAllowed.course.lessons  
         const lessonArray = []
         for(const item of lessons){
             const lesson = await Lesson.findOne({_id: item, level: level})

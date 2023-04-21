@@ -66,7 +66,7 @@ async function deleteCloudFiles(key){
     }
 }
 
-async function verifyInputs(req, folderPath){
+async function verifyInputs(req){
     const jsondataValidation = joi.object({
         level: joi.string().valid(...levelsArray).insensitive(),
         title: joi.string().min(4).max(30),
@@ -83,7 +83,7 @@ async function verifyInputs(req, folderPath){
         const uppercaseLevel = value.level.toUpperCase()
         value.level = uppercaseLevel 
         const files = await new Promise((resolve, reject) =>{
-            fs.readdir(folderPath, (err,files) =>{
+            fs.readdir(uploadsFolderPath, (err,files) =>{
                 if(err){
                     console.log(err)
                     reject(err)
@@ -141,7 +141,7 @@ const createLessonRuz = async(req, res, next) =>{
     let abortTransaction = false
     const modifiedFiles = [] 
     try{
-        const {json} = await verifyInputs(req, uploadsFolderPath)
+        const {json} = await verifyInputs(req)
         const files = req.files 
         for(const item in files){
             if(files[item][0]){

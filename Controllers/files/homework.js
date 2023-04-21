@@ -1,19 +1,19 @@
 const Lesson = require('../../DB/models/Lesson')
 const joi = require('joi')
 const Homework = require('../../DB/models/Hw')
-const {BadRequest, NotFound} = require('../../Error/ErrorSamples')
+const { BadRequest, NotFound } = require('../../Error/ErrorSamples')
 const mongoose = require('mongoose')
 const { StatusCodes } = require('http-status-codes')
 const User = require('../../DB/models/User')
 const Level = require('../../DB/models/Level')
+
 function verifyInput(data){
     try{
         const validationSchema = joi.object({
             question: joi.string().min(1),
             options: joi.array().items(joi.string()).min(2),
             correctAnswer: joi.string().min(1),
-            lessonId: joi.string().min(6),
-            homeworkTimeOutMinutes: joi.number().optional()
+            lessonId: joi.string().min(6)
         })
         const {error, value} = validationSchema.validate(data)
         if(error){
@@ -30,13 +30,13 @@ const uploadHomework = async(req, res, next) =>{
     const session = await mongoose.startSession()
     session.startTransaction()
     try{
-        const data = verifyInput(req.body)
+        const {question, options, lessonId, correctAnswer} = await verifyInput(req.body)
         if(!data) throw new BadRequest("Invalid input")
         const homework = new Homework({
-            question: data.question,
-            options: data.options,
-            correctAnswer: data.correctAnswer,
-            lessonId: data.lessonId
+            question: question,
+            options: options,
+            correctAnswer: correctAnswer,
+            lessonId: lessonId
         })
         const uploadedHomework = await homework.save({session})
         const lesson = await Lesson.findByIdAndUpdate(data.lessonId, {
@@ -66,13 +66,13 @@ const uploadHomework = async(req, res, next) =>{
 const editHomework = async(req, res, next) => {
     const homeworkId = req.params.id 
     try{
-        const data = verifyInput(req.body)
+        const {question, options, correcrAnswer, lessonId} = await verifyInput(req.body)
         if(!homeworkId) throw new BadRequest("Id of the object you are trying to update is missing")
         const homework = await Homework.findOneAndUpdate({lessonId: data.lessonId, _id: homeworkId}, {
-            question: data.question,
-            options: data.options,
-            correctAnswer: data.correcrAnswer,
-            lessonId: data.lessonId 
+            question: question,
+            options: options,
+            correctAnswer: correcrAnswer,
+            lessonId: lessonId 
         }, {new: true})
         if(!homework) throw new BadRequest("Failed to update the homework")
         return res.status(StatusCodes.CREATED).json({msg: 'homework has been updated', homework})
@@ -125,7 +125,7 @@ const getHomework = async(req, res, next) =>{
         const homeworkArray = lesson.homework 
         if(homeworkArray.length < 1) return res.status(StatusCodes.OK).json({homework: []})
         const homework = await Homework.find({lessonId})
-        return res.status(StatusCodes.OK).json({homework})
+        return res.status(StatusCodes.OK).json({homework, timeOut: lesson.homeworkTimeOutMinutes})
     }catch(err){
         return next(err)
     }
@@ -160,44 +160,71 @@ const verifyHomework = async(data) => {
     }
 }
 const checkHomework = async(req, res, next) =>{
-    const userId = req.userId 
     const lessonId = req?.params?.lessonId
-    const session = await mongoose.startSession()
-    session.startTransaction()
+    const userId = req.userId 
+    const data = req.body?.homework
     try{
-        const {answers, level} = req.body
-        if(!answers || answers.length < 1) throw BadRequest("No homework was provided to check")
-        if(!lessonId) throw new BadRequest("Lesso ID is missing")
-        const data = await verifyHomework(answers) 
-        
-        let score = 0
-        for(const item of data){
-            if(item.correctAnswer === item.chosenAnswer){
-                score += 1
+        if(!lessonId) throw new BadRequest("Lesson ID is necessary for the request")
+        const lesson = await Lesson.findById(lessonId)
+        if(!lesson) throw new NotFound(`Lesson with Id ${lessonId} not found`)
+        const homeworkArr = await verifyHomework(data)
+        let hwScore = 0 
+        for(let i = 0; i < homeworkArr.length; i++){
+            const chosenAnswer = homeworkArr[i].chosenAnswer 
+            const correctAnswer = homeworkArr[i].correctAnswer 
+            homeworkArr[i].chosenAnswer = chosenAnswer.replace(/[.\s]/g, '').toLowerCase()
+            homeworkArr[i].correctAnswer = correctAnswer.replace(/[.\s]/g, '').toLowerCase()
+            if(homeworkArr[i].chosenAnswer === homeworkArr[i].correctAnswer){
+                hwScore += 1
             }
         }
-        score = (score / data.length) * 100 
-        if(score < 70) {
-            const msg = `Please take the test again. You scored ${score} percent although the minimum of 70 percent is required`
-            return res.status(StatusCodes.OK).json({msg})
+        hwScore = (hwScore / homeworkArr.length) * 100 
+        console.log('Score', hwScore)
+        if(hwScore < 70){
+            // think about msg 
+            return res.status(StatusCodes.OK).json({msg: 'score is not sufficient to complete this lesson, try again please'})
         }
-        // check if the homework was uploaded for the last lesson 
         const user = await User.findById(userId)
-        const lesson = await Lesson.findOne({_id: lessonId, level: level.toUpperCase()}) 
-        if(!lesson) throw new NotFound("Lesson Not Found")
         const course = await Level.findOne({level: lesson.level})
-        user.completedLessons.push(lesson._id)
-        if(user.completedLessons.length === course.lessons.length){
-            user.progressScore = course.minScore + 1
-            user.completedLevels.push(course._id) 
-            const nextCourse = await Level.findOne({minScore: user.progressScore})
-            user.level = nextCourse.level
-            await user.save()
-            return res.status(StatusCodes.OK).json({msg: "congrats on completing the course"})
+        if(user.completedLessons.includes(lesson._id) || user.completedLevels.includes(course._id)){
+            // prevents user from submiting the same homework twice 
+            return res.status(StatusCodes.OK).json({msg: 'you already completed this lesson ;)'})
         }
-        user.progressScore = user.completedLessons.length / course.lessons.length 
-        return res.status(StatusCodes.OK).json({msg: "well-done"}) 
+
+        // handle exceptions later on here 
+        user.completedLessons.push(lessonId) 
+
+        const currentScore = user.completedLessons.length / course.lessons.length 
+        
+        if(currentScore < 1){
+            const updatedUser = await User.findOneAndUpdate({_id: userId}, {
+                currentScore: currentScore,
+                $push: {completedLessons: lessonId}
+            })
+            return res.status(StatusCodes.OK).json({msg: 'you completed the lesson', updatedUser})
+        }else if(currentScore >= 1 && user.progressScore + 1 !== 6){
+            // when user completes any course RATHER THAN ielts 
+            const nextCourse = await Level.findOne({minScore: user.progressScore + 1})
+            const updatedUser = await User.findOneAndUpdate({_id: userId}, 
+                {
+                    progressScore: user.progressScore + 1,
+                    level: nextCourse.level,
+                    currentScore: 0,
+                    completedLessons: [],
+                    $push: {completedLevels: course._id}
+                }, {new: true})
+            return res.status(StatusCodes.OK).json({msg: 'you completed the course!!!', updatedUser})
+        }else if(currentScore >= 1 && user.progressScore + 1 === 6){
+            const updatedUser = await User.findOneAndUpdate({_id: userId}, 
+                { 
+                    progressScore: 6, 
+                    $push: {completedLevels: course._id}
+                }, {new: true})
+            return res.status(StatusCodes.OK).json({msg: "You have completed final course congrats!!!", updatedUser})
+        }
+        return res.status(StatusCodes.OK).json({msg: 'oki'})
     }catch(err){
+        console.log(err)
         return next(err)
     }
 }

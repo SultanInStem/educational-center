@@ -13,7 +13,7 @@ const verifyAdmin = async (req, res, next) => {
                 return res.status(StatusCodes.UNAUTHORIZED).json({err: 'Unathorized'}) 
             }
             const isValidAdmin = await isAdmin(decoded.userId)
-            if(!isValidAdmin) throw new Unauthorized("You don not have admin permissions to modify this resource")
+            if(!isValidAdmin) return res.status(StatusCodes.UNAUTHORIZED).json({err: 'You do not have admin permissions to modify this resource'})
             req.userId = decoded.userId 
             next()
         })

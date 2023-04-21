@@ -1,4 +1,4 @@
-const {CreateLessonInEnglish} = require('./CreateLessonEng')
+const {CreateLessonInEnglish, TestVerifyInputs} = require('./CreateLessonEng')
 const createLessonRuz = require('./CreateLessonRu')
 const {getAllLessons} = require('./GetAllLessons')
 const {getLesson} = require('./getLesson')
@@ -8,5 +8,6 @@ module.exports = {
     CreateLessonInEnglish,
     getAllLessons,
     getLesson,
-    DeleteLesson
+    DeleteLesson,
+    TestVerifyInputs
 }

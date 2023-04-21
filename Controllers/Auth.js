@@ -7,7 +7,6 @@ const Level = require('../DB/models/Level')
 const jwt = require('jsonwebtoken')
 const {Unauthorized, BadRequest, NotFound} = require('../Error/ErrorSamples')
 const {levelsArray} = require('../imports')
-
 const SignUp = async(req, res, next) =>{
     const signupSchema = joi.object({
         name: joi.string().required().min(3).max(40),
@@ -40,6 +39,7 @@ const SignUp = async(req, res, next) =>{
             gender, 
             level: upperCaseLevel, 
             progressScore: score,
+            currentScore: 0, 
             lastActive: lastActive
         })
         const accessToken = createAccessToken(user._id)
@@ -118,7 +118,8 @@ const getNewToken = async(req, res, next) =>{
             if(err){
                 throw new Unauthorized('Access Token is Expired')
             }
-            const user = await User.findOne({_id: decoded.userId}) 
+            const currentTime = getTime()
+            const user = await User.findOneAndUpdate({_id: decoded.userId}, {lastActive: currentTime}) 
             if(!user) throw new Unauthorized('You are not authorized')
             const accessToken = createAccessToken(decoded.userId)
             const refreshToken = createRefreshToken(decoded.userId)
