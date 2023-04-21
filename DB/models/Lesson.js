@@ -39,7 +39,7 @@ const LesssonSchema = new mongoose.Schema({
         type: Array, // here we will store id's of questions ,
         default: []
     },
-    level: {
+    course: {
         type: String
     }
 })

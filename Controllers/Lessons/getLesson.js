@@ -3,25 +3,25 @@ const Lesson = require('../../DB/models/Lesson')
 const { BadRequest, Unauthorized, NotFound } = require('../../Error/ErrorSamples')
 const { StatusCodes } = require('http-status-codes')
 const User = require('../../DB/models/User')
-const Level = require('../../DB/models/Level')
+const Course = require('../../DB/models/Course')
 const { verifyUserProgress } = require('./GetAllLessons')
 const joi = require('joi')
 const PRIVATE_KEY = process.env.PRIVATE_KEY
 const KEY_PAIR_ID = process.env.AWS_CLOUD_KEY_PAIR_ID 
-const {levelsArray} = require('../../imports')
+const { levelsArray } = require('../../imports')
 const getLesson = async(req, res, next) =>{
     try{
-        const {level, lessonId} = req.query // we need to know level to verify the progress and to improve the read speed with indexes in the future
+        const {course, lessonId} = req.query // we need to know level to verify the progress and to improve the read speed with indexes in the future
         const userId = req.userId 
-        const isValid = isLevelValid(level)
-        const upperCaseLevel = level.toUpperCase()
-        if(!isValid.level) throw isValid
-        if(!level || !lessonId) throw new BadRequest('provide proper queries')
+        const isValid = isLevelValid(course)
+        const upperCaseLevel = course.toUpperCase()
+        if(!isValid.course) throw isValid
+        if(!course || !lessonId) throw new BadRequest('provide proper queries')
         const isAllowed = await verifyUserProgress(userId, upperCaseLevel) 
         if(!isAllowed) throw new Unauthorized('You are unauthorized to access this lesson') 
 
 
-        const lesson = await Lesson.findOne({_id: lessonId, level: upperCaseLevel})
+        const lesson = await Lesson.findOne({_id: lessonId, course: upperCaseLevel})
         if(!lesson) throw new NotFound('Lesson Not Found')
         const {videos, title, description, homework, files, thumbNail} = lesson 
         lesson.thumbNail = getUrl(thumbNail) 
@@ -45,11 +45,11 @@ const getLesson = async(req, res, next) =>{
     }
 }
 
-function isLevelValid(level){
+function isLevelValid(course){
     const validationSchema = joi.object({
-        level: joi.string().valid(...levelsArray).insensitive() 
+        course: joi.string().valid(...levelsArray).insensitive() 
     })
-    const {error, value} = validationSchema.validate({level}) 
+    const {error, value} = validationSchema.validate({course}) 
     if(error){
         return error
     }else{

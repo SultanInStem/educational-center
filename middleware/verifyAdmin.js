@@ -10,7 +10,7 @@ const verifyAdmin = async (req, res, next) => {
         const token = headers.split(' ')[1] 
         jwt.verify(token, process.env.JWT_ACCESS_KEY, async (err, decoded) =>{
             if(err){
-                return res.status(StatusCodes.UNAUTHORIZED).json({err: 'Unathorized'}) 
+                return res.status(StatusCodes.UNAUTHORIZED).json({err: 'Unauthorized'}) 
             }
             const isValidAdmin = await isAdmin(decoded.userId)
             if(!isValidAdmin) return res.status(StatusCodes.UNAUTHORIZED).json({err: 'You do not have admin permissions to modify this resource'})

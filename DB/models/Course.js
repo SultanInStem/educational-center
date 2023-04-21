@@ -1,7 +1,7 @@
 const mongoose = require('mongoose')
 
-const LevelSchema = new mongoose.Schema({
-    level: {
+const CourseSchema = new mongoose.Schema({
+    name: {
         type: String,
         required: true,
         unique: true
@@ -20,6 +20,6 @@ const LevelSchema = new mongoose.Schema({
     }
 })
 
-const Level = mongoose.model('levels', LevelSchema)
+const Course = mongoose.model('course', CourseSchema)
 
-module.exports = Level
+module.exports = Course

@@ -3,7 +3,7 @@ const joi = require('joi')
 const {createAccessToken, createRefreshToken} = require('../tokens/generateTokens')
 const {StatusCodes} = require('http-status-codes')
 const {getTime} = require('../helperFuncs/getTime')
-const Level = require('../DB/models/Level')
+const Course = require('../DB/models/Course')
 const jwt = require('jsonwebtoken')
 const {Unauthorized, BadRequest, NotFound} = require('../Error/ErrorSamples')
 const {levelsArray} = require('../imports')
@@ -14,7 +14,7 @@ const SignUp = async(req, res, next) =>{
         password: joi.string().min(6).max(12),
         age: joi.number().required(),
         gender: joi.string().max(1).required(),
-        level: joi.string().valid(...levelsArray).insensitive().required(),
+        courseName: joi.string().valid(...levelsArray).insensitive().required(),
         score: joi.number().required().min(0).max(5) 
     })
     const {error, value} = signupSchema.validate(req.body)
@@ -22,13 +22,13 @@ const SignUp = async(req, res, next) =>{
         return next(error)
     }
     try{
-        const {name, email, password, age, gender, level, score} = value
-        const course = await Level.findOne({minScore: score})
-        const upperCaseLevel = level.toUpperCase()
-        if(course.level !== upperCaseLevel){
-            throw new BadRequest(`Level and score provided do not match`)
-        }else if(!course){
-            throw new NotFound("Lesson Not Found")
+        const {name, email, password, age, gender, courseName, score} = value
+        const courseObj = await Course.findOne({minScore: score})
+        const upperCaseCourse = courseName.toUpperCase()
+        if(courseObj.name !== upperCaseCourse){
+            throw new BadRequest(`Course and score provided do not match`)
+        }else if(!courseObj){
+            throw new NotFound("Course Not Found")
         }
         const lastActive = getTime()
         const user = await User.create({
@@ -37,7 +37,7 @@ const SignUp = async(req, res, next) =>{
             password, 
             age, 
             gender, 
-            level: upperCaseLevel, 
+            course: upperCaseCourse, 
             progressScore: score,
             currentScore: 0, 
             lastActive: lastActive
@@ -72,15 +72,15 @@ const Login = async(req, res, next) =>{
             profilePicture: user.profilePicture, 
             name: user.name,
             progressScore: user.progressScore,
-            level: user.level
+            course: user.course
         }
-        const levels = await Level.find() // you might wanna leave out lesson array
+        const courses = await Course.find() // you might wanna leave out lesson array
         return res.status(StatusCodes.OK).json({
             accessToken, 
             refreshToken, 
             isAdmin: user.isAdmin,
             score: user.progressScore,
-            level: user.level
+            course: user.course
         })
     }catch(err){
         return next(err)

@@ -7,7 +7,7 @@ const isImage = require('../../helperFuncs/isImage')
 const genKey = require('../../helperFuncs/genS3Key')
 const { StatusCodes } = require('http-status-codes')
 const Lesson = require('../../DB/models/Lesson')
-const Level = require('../../DB/models/Level')
+const Course = require('../../DB/models/Course')
 const mongoose = require('mongoose')
 const path = require('path')
 const joi = require('joi')
@@ -68,7 +68,7 @@ async function deleteCloudFiles(key){
 
 async function verifyInputs(req){
     const jsondataValidation = joi.object({
-        level: joi.string().valid(...levelsArray).insensitive(),
+        course: joi.string().valid(...levelsArray).insensitive(),
         title: joi.string().min(4).max(30),
         description: joi.string().min(5)
     })
@@ -80,8 +80,8 @@ async function verifyInputs(req){
         if(error) throw error
         let videoNumber = 0; 
         let imageNumber = 0; 
-        const uppercaseLevel = value.level.toUpperCase()
-        value.level = uppercaseLevel 
+        const uppercaseLevel = value.course.toUpperCase()
+        value.course = uppercaseLevel 
         const files = await new Promise((resolve, reject) =>{
             fs.readdir(uploadsFolderPath, (err,files) =>{
                 if(err){
@@ -171,10 +171,10 @@ const createLessonRuz = async(req, res, next) =>{
             console.log(response)
         }
         await lesson.save({session})
-        const level = await Level.findOneAndUpdate({level: json.level}, { // error done on purpose 
+        const course = await Course.findOneAndUpdate({name: json.course}, { // error done on purpose 
             $push: {lessons: lesson._id}
         }, {new: true, session})
-        if(!level){
+        if(!course){
             abortTransaction = true 
             throw new BadRequest("Failed to create the lesson")
         }

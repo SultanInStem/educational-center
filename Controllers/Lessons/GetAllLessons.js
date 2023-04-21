@@ -1,17 +1,18 @@
-const {getSignedUrl} = require('@aws-sdk/cloudfront-signer')
+const { Unauthorized, NotFound } = require('../../Error/ErrorSamples')
+const { getSignedUrl } = require('@aws-sdk/cloudfront-signer')
 const { StatusCodes } = require('http-status-codes')
-const Level = require('../../DB/models/Level')
+const Course = require('../../DB/models/Course')
+const { levelsArray } = require('../../imports')
 const Lesson = require('../../DB/models/Lesson')
 const User = require('../../DB/models/User')
-const {Unauthorized, NotFound} = require('../../Error/ErrorSamples')
 const joi = require('joi')
 const PRIVATE_KEY = process.env.PRIVATE_KEY
 const KEY_PAIR_ID = process.env.AWS_CLOUD_KEY_PAIR_ID 
 
-async function verifyUserProgress(userId, level){
+async function verifyUserProgress(userId, courseName){
     try{
         const user = await User.findOne({_id: userId})
-        const course = await Level.findOne({level: level})
+        const course = await Course.findOne({name: courseName})
         if(!course) throw new NotFound('Course not found')
         if(user.progressScore >= course.minScore){
             return {course, minScore: course.minScore}
@@ -26,26 +27,19 @@ async function verifyUserProgress(userId, level){
 
 const getAllLessons = async (req, res, next) => {
     const ValidationSchema = joi.object({
-        level: joi.string().valid(
-            'beginner',
-            'elementary',
-            'pre-intermediate',
-            'intermediate',
-            'upper-intermediate',
-            'ielts'
-        ).insensitive()
+        course: joi.string().valid(...levelsArray).insensitive()
     })
     const {error, value} = ValidationSchema.validate(req.params)
     if(error) return next(error)
-    const level = value.level.toUpperCase()
+    const courseName = value.course.toUpperCase()
     const userId = req.userId 
-    const isAllowed = await verifyUserProgress(userId, level)
+    const isAllowed = await verifyUserProgress(userId, courseName)
     try{
         if(!isAllowed) throw new Unauthorized('You are not authorized to access this resource')
         const lessons = isAllowed.course.lessons  
         const lessonArray = []
         for(const item of lessons){
-            const lesson = await Lesson.findOne({_id: item, level: level})
+            const lesson = await Lesson.findOne({_id: item, course: courseName})
             if(lesson){
                 const temp = {
                     title: lesson.title,

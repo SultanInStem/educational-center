@@ -32,7 +32,7 @@ const dataScheamaRuz = [
 router.post('/english', [ verifyAdmin, upload.fields(dataSchemaEnglish) ], TestVerifyInputs)
 router.post('/ruz', [ verifyAdmin, upload.fields(dataScheamaRuz) ], createLessonRuz) 
 router.get('/single', authenticate, getLesson) // single?lessonId&level
-router.get('/:level', authenticate, getAllLessons)    
+router.get('/:course', authenticate, getAllLessons)    
 router.delete('/:id', verifyAdmin, DeleteLesson)
 
 module.exports = router

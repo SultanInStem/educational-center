@@ -1,11 +1,11 @@
-const Lesson = require('../../DB/models/Lesson')
 const joi = require('joi')
 const Homework = require('../../DB/models/Hw')
 const { BadRequest, NotFound } = require('../../Error/ErrorSamples')
 const mongoose = require('mongoose')
 const { StatusCodes } = require('http-status-codes')
 const User = require('../../DB/models/User')
-const Level = require('../../DB/models/Level')
+const Course = require('../../DB/models/Course')
+const Lesson = require('../../DB/models/Lesson')
 
 function verifyInput(data){
     try{
@@ -39,7 +39,7 @@ const uploadHomework = async(req, res, next) =>{
             lessonId: lessonId
         })
         const uploadedHomework = await homework.save({session})
-        const lesson = await Lesson.findByIdAndUpdate(data.lessonId, {
+        const lesson = await Lesson.findByIdAndUpdate(lessonId, {
             $push: {homework: homework._id}
         }, {session})
         if(!lesson) {
@@ -68,7 +68,7 @@ const editHomework = async(req, res, next) => {
     try{
         const {question, options, correcrAnswer, lessonId} = await verifyInput(req.body)
         if(!homeworkId) throw new BadRequest("Id of the object you are trying to update is missing")
-        const homework = await Homework.findOneAndUpdate({lessonId: data.lessonId, _id: homeworkId}, {
+        const homework = await Homework.findOneAndUpdate({lessonId, _id: homeworkId}, {
             question: question,
             options: options,
             correctAnswer: correcrAnswer,
@@ -185,8 +185,9 @@ const checkHomework = async(req, res, next) =>{
             return res.status(StatusCodes.OK).json({msg: 'score is not sufficient to complete this lesson, try again please'})
         }
         const user = await User.findById(userId)
-        const course = await Level.findOne({level: lesson.level})
-        if(user.completedLessons.includes(lesson._id) || user.completedLevels.includes(course._id)){
+        const course = await Course.findOne({name: lesson.course})
+        if(!course) throw new NotFound("Course not found")
+        if(user.completedLessons.includes(lesson._id) || user.completedCourses.includes(course._id)){
             // prevents user from submiting the same homework twice 
             return res.status(StatusCodes.OK).json({msg: 'you already completed this lesson ;)'})
         }
@@ -195,7 +196,7 @@ const checkHomework = async(req, res, next) =>{
         user.completedLessons.push(lessonId) 
 
         const currentScore = user.completedLessons.length / course.lessons.length 
-        
+
         if(currentScore < 1){
             const updatedUser = await User.findOneAndUpdate({_id: userId}, {
                 currentScore: currentScore,
@@ -204,21 +205,22 @@ const checkHomework = async(req, res, next) =>{
             return res.status(StatusCodes.OK).json({msg: 'you completed the lesson', updatedUser})
         }else if(currentScore >= 1 && user.progressScore + 1 !== 6){
             // when user completes any course RATHER THAN ielts 
-            const nextCourse = await Level.findOne({minScore: user.progressScore + 1})
+            const nextCourse = await Course.findOne({minScore: user.progressScore + 1})
+            if(!nextCourse) return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({err: "Ooops, something went wrong"})
             const updatedUser = await User.findOneAndUpdate({_id: userId}, 
                 {
                     progressScore: user.progressScore + 1,
-                    level: nextCourse.level,
+                    course: nextCourse.name,
                     currentScore: 0,
                     completedLessons: [],
-                    $push: {completedLevels: course._id}
+                    $push: {completedCourses: course._id}
                 }, {new: true})
             return res.status(StatusCodes.OK).json({msg: 'you completed the course!!!', updatedUser})
         }else if(currentScore >= 1 && user.progressScore + 1 === 6){
             const updatedUser = await User.findOneAndUpdate({_id: userId}, 
                 { 
                     progressScore: 6, 
-                    $push: {completedLevels: course._id}
+                    $push: {completedCourses: course._id}
                 }, {new: true})
             return res.status(StatusCodes.OK).json({msg: "You have completed final course congrats!!!", updatedUser})
         }

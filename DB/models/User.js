@@ -43,7 +43,7 @@ const UserSchema = new mongoose.Schema({
         type: Array,
         default: []
     }, 
-    completedLevels:{
+    completedCourses:{
         type: Array,
         default: []
     },
@@ -55,7 +55,7 @@ const UserSchema = new mongoose.Schema({
         type: Boolean,
         default: false
     },
-    level: {
+    course: {
         type: String
     }
 }, {timestamps: true})

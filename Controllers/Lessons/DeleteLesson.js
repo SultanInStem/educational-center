@@ -1,26 +1,12 @@
-const {S3, DeleteObjectCommand} = require('@aws-sdk/client-s3')
-const {CloudFrontClient, CreateInvalidationCommand} = require('@aws-sdk/client-cloudfront')
+const { CreateInvalidationCommand } = require('@aws-sdk/client-cloudfront')
 const { BadRequest, NotFound } = require('../../Error/ErrorSamples')
-const Lesson = require('../../DB/models/Lesson')
-const Level = require('../../DB/models/Level')
+const { DeleteObjectCommand } = require('@aws-sdk/client-s3')
 const { StatusCodes } = require('http-status-codes')
+const { s3, CloudFront } = require('../../imports')
+const Lesson = require('../../DB/models/Lesson')
+const Course = require('../../DB/models/Course')
 const mongoose = require('mongoose')
 
-const s3 = new S3({
-    credentials: {
-        accessKeyId: process.env.AWS_ACCESS_KEY,
-        secretAccessKey: process.env.AWS_SECRET_KEY
-    },
-    region: process.env.AWS_REGION 
-})
-
-const CloudFront = new CloudFrontClient({
-    credentials: {
-        accessKeyId: process.env.AWS_ACCESS_KEY,
-        secretAccessKey: process.env.AWS_SECRET_KEY
-    },
-    region: process.env.AWS_REGION 
-})
 
 const DeleteLesson = async (req, res, next) =>{
     const lessonId = req.params.id 
@@ -35,10 +21,10 @@ const DeleteLesson = async (req, res, next) =>{
             abortTransaction = true 
             throw new NotFound("Lesson Not Found")
         }
-        const level = await Level.findOneAndUpdate({level: lesson.level}, {
+        const course = await Course.findOneAndUpdate({name: lesson.course}, {
             $pull: {lessons: lesson._id}
         }, {new: true, session})
-        if(!level){
+        if(!course){
             abortTransaction = true 
             throw new NotFound("Course Not Found")
         }

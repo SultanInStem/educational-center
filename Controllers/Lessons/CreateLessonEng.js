@@ -7,12 +7,11 @@ const genKey = require('../../helperFuncs/genS3Key')
 const isImage = require('../../helperFuncs/isImage')
 const isVideo = require('../../helperFuncs/isVideo')
 const Lesson = require('../../DB/models/Lesson')
-const Level = require('../../DB/models/Level')
+const Course = require('../../DB/models/Course')
 const mongoose = require('mongoose')
 const path = require('path')
 const joi = require('joi')
 const fs = require('fs')
-const { isFloat32Array } = require('util/types')
 const BUCKET_NAME = process.env.AWS_BUCKET_NAME  
 const uploadsFolder = path.join(__dirname, '..', '..', 'uploads')
 
@@ -23,12 +22,12 @@ const CreateLessonInEnglish = async(req, res, next) =>{
     const modifiedFiles = []
     try{
         const result = await verifyInputs(req)
-        const {video, image, jsondata: {title, description, level}} = result 
+        const {video, image, jsondata: {title, description, courseName}} = result 
         Aws_Video_Key = await uploadVideoToS3(uploadsFolder, video)
         if(image){
             Aws_Image_Key = await uploadImageToS3(uploadsFolder, image)
         }
-        const queryLevel = level.toUpperCase()
+        const queryCourse = courseName.toUpperCase()
         const lesson = new Lesson({
             thumbNail: Aws_Image_Key,
             title: title,
@@ -36,13 +35,13 @@ const CreateLessonInEnglish = async(req, res, next) =>{
             videos: {
                 english: Aws_Video_Key
             },
-            level: queryLevel
+            course: queryCourse
         }) 
         const uploadedLesson = await lesson.save({session})
         if(!uploadedLesson){
             throw new mongoose.Error('mongo error')
         }
-        const course = await Level.findOneAndUpdate({level: queryLevel}, {$push: {lessons: lesson._id}}, {session}) 
+        const course = await Course.findOneAndUpdate({name: queryCourse}, {$push: {lessons: lesson._id}}, {session}) 
         if(!course){
             throw new mongoose.Error("mongo error")
         }
@@ -71,14 +70,6 @@ const TestVerifyInputs = async (req, res, next) =>{
     try{
         const result = await verifyInputs(req)
         console.log(result)
-        // console.log(req.files)
-        // const files = req.files 
-        // for(const item in files){
-        //     console.log(files[item])
-        //     if(files[item]){
-
-        //     }
-        // }
         return res.status(StatusCodes.OK).json({msg: 'this is a test router'})
     }catch(err){
         console.log(err)
@@ -87,7 +78,7 @@ const TestVerifyInputs = async (req, res, next) =>{
 }
 async function verifyInputs(req){
     const joiSchema = joi.object({
-        level: joi.string().valid(...levelsArray).insensitive(),
+        courseName: joi.string().valid(...levelsArray).insensitive(),
         title: joi.string().min(4).max(20),
         description: joi.string().min(5)
     })

@@ -29,7 +29,7 @@ app.use('/api/v1/lessons/homework', HomeworkRouter)
 app.use(ErrorHandler)
 app.use(NotFound)
 
-
+const Course = require('./DB/models/Course')
 const start = async() =>{  
     try{
         await connect(process.env.MONGO_URI)
