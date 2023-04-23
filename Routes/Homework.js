@@ -15,5 +15,5 @@ router.post('/', verifyAdmin, uploadHomework)
 router.put('/:id', verifyAdmin, editHomework) 
 router.delete('/:id', verifyAdmin, deleteHomework) 
 router.put('/check/:lessonId', authenticate, checkHomework)
-router.put("/timeout/:lessonId", verifyAdmin, changeTimeOut)
+router.patch("/timeout/:lessonId", verifyAdmin, changeTimeOut)
 module.exports = router  

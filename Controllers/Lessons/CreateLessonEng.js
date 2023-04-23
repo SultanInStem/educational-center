@@ -1,7 +1,7 @@
 const {PutObjectCommand, DeleteObjectCommand} = require('@aws-sdk/client-s3')
 const  {CreateInvalidationCommand} = require('@aws-sdk/client-cloudfront')
 const {s3, CloudFront, levelsArray} = require('../../imports')
-const {BadRequest} = require('../../Error/ErrorSamples')
+const { BadRequest, CustomError }= require('../../Error/ErrorSamples')
 const { StatusCodes } = require('http-status-codes')
 const genKey = require('../../helperFuncs/genS3Key')
 const isImage = require('../../helperFuncs/isImage')
@@ -15,6 +15,28 @@ const fs = require('fs')
 const BUCKET_NAME = process.env.AWS_BUCKET_NAME  
 const uploadsFolder = path.join(__dirname, '..', '..', 'uploads')
 
+const uploadFilesToS3 = async (file) =>{
+    console.log('Im on it...')
+    try{
+        if(!file){
+            throw new CustomError("Forgot to pass file to UplodFilesToS3 function")
+        }
+        const readStream = fs.createReadStream(path.join(uploadsFolder, file.originalname))
+        const putCommand = new PutObjectCommand({
+            Bucket: BUCKET_NAME,
+            Key: file.awsKey,
+            Body: readStream,
+            ContentType: file.mimetype,
+            ContentDisposition: "inline"
+        })
+        const response = await s3.send(putCommand)
+        console.log(response)
+        return response
+    }catch(err){
+        throw err 
+    }
+}
+
 const CreateLessonInEnglish = async(req, res, next) =>{
     const session = await mongoose.startSession()
     session.startTransaction()
@@ -22,40 +44,48 @@ const CreateLessonInEnglish = async(req, res, next) =>{
     const modifiedFiles = []
     try{
         const result = await verifyInputs(req)
-        const {video, image, jsondata: {title, description, courseName}} = result 
-        Aws_Video_Key = await uploadVideoToS3(uploadsFolder, video)
-        if(image){
-            Aws_Image_Key = await uploadImageToS3(uploadsFolder, image)
+        const {jsondata} = result
+        const files = req.files  
+        for(const item in files){
+            if(files[item][0]){
+                const temp = files[item][0]
+                const newFileName = temp.filename.replace(/[\s-]+/g, '') 
+                modifiedFiles.push({
+                    fieldname: temp.fieldname,
+                    filename: newFileName,
+                    mimetype: temp.mimetype,
+                    originalname: temp.originalname,
+                    awsKey: genKey() + newFileName
+                })
+            }
         }
-        const queryCourse = courseName.toUpperCase()
-        const lesson = new Lesson({
-            thumbNail: Aws_Image_Key,
-            title: title,
-            description,
-            videos: {
-                english: Aws_Video_Key
-            },
-            course: queryCourse
-        }) 
-        const uploadedLesson = await lesson.save({session})
-        if(!uploadedLesson){
-            throw new mongoose.Error('mongo error')
+        if(modifiedFiles.length !== 2){
+            throw new BadRequest(`There must be only one image and video, the number of received files is ${modifiedFiles.length}`)
         }
-        const course = await Course.findOneAndUpdate({name: queryCourse}, {$push: {lessons: lesson._id}}, {session}) 
-        if(!course){
-            throw new mongoose.Error("mongo error")
+        const lesson = new Lesson(jsondata)
+        const course = await Course.findOneAndUpdate({name: jsondata.course}, {
+            $addToSet: {lessons: lesson._id}
+        }, {session})
+        for(let i = 0; i < modifiedFiles.length; i++){
+            const file = modifiedFiles[i]
+            await uploadFilesToS3(file)
+            if(file.fieldname === 'video'){
+                lesson.videos.english = file.awsKey 
+            }else if(file.fieldname === 'image'){
+                lesson.thumbNail = file.awsKey 
+            }
         }
-        const transaction = await session.commitTransaction()
-        return res.status(StatusCodes.CREATED).json({msg: 'Lesson has been created successfuly', status: "oki ;)"}) 
+        await lesson.save({session})
+        await session.commitTransaction()
+        return res.status(StatusCodes.CREATED).json({msg: 'Lesson has been created successfuly', lesson}) 
     }catch(err){ 
-        if(Aws_Video_Key){
-            await deleteFromS3(Aws_Video_Key) // deletes files from s3 and invalidates cash in CDN
-        }
-        if(Aws_Image_Key){
-            await deleteFromS3(Aws_Image_Key) // deletes files from s3 and invalidates cash in CDN
-        }
         abortTransaction = true 
-        await deleteLocalFiles(uploadsFolder)
+        for(const item of modifiedFiles){
+            const objectKey = item.awsKey
+            await invalidateCash(objectKey)
+            await deleteFromS3(objectKey)
+        }
+        console.log('Fils have been deleted from S3 Bucket')
         return next(err)
     }finally{
         if(abortTransaction){
@@ -66,19 +96,9 @@ const CreateLessonInEnglish = async(req, res, next) =>{
     }
 }
 
-const TestVerifyInputs = async (req, res, next) =>{
-    try{
-        const result = await verifyInputs(req)
-        console.log(result)
-        return res.status(StatusCodes.OK).json({msg: 'this is a test router'})
-    }catch(err){
-        console.log(err)
-        return next(err)
-    }
-}
 async function verifyInputs(req){
     const joiSchema = joi.object({
-        courseName: joi.string().valid(...levelsArray).insensitive(),
+        course: joi.string().valid(...levelsArray).insensitive(),
         title: joi.string().min(4).max(20),
         description: joi.string().min(5)
     })
@@ -91,6 +111,8 @@ async function verifyInputs(req){
             console.log(error)
             throw error
         }
+        const courseNameUppercase = parsedJson.course.toUpperCase()
+        parsedJson.course = courseNameUppercase
         const files = await new Promise((resolve, reject) => {
             fs.readdir(uploadsFolder, function (err, files) {
               if(err){
@@ -108,12 +130,12 @@ async function verifyInputs(req){
                 if(videoNumber !== 1){
                     reject(new BadRequest(`One video is allowed, you provided ${videoNumber}`))
                 }else if(imageNumber > 1){
-                    reject(new BadRequest(`Only one video is allowed, you provided ${imageNumber}`))
+                    reject(new BadRequest(`Only one image is allowed, you provided ${imageNumber}`))
                 }
               resolve(files); // pass the result to the callback function
             });
         });
-        return {files, jsondata: value}
+        return {jsondata: parsedJson}
     }catch(err){
         console.log('uploads folder', uploadsFolder)
         await deleteLocalFiles(uploadsFolder)
@@ -141,7 +163,7 @@ function deleteLocalFiles(folderPath){
             })
             Promise.all(deletePromises)
             .then(() => {
-                console.log('All files has been deleted')
+                console.log('All files have been deleted')
                 resolve()
             }).catch(err =>{
                 console.log(`Failes to delete all files in folder ${folderPath}`)
@@ -150,52 +172,7 @@ function deleteLocalFiles(folderPath){
         })
     })
 }
-async function uploadVideoToS3(folderPath, video){ // delete files from ./uploads after they have been uploaded
-    console.log('im on it....')
-    try{
-        const readStream = fs.createReadStream(path.join(folderPath, video))
-        const extension = video.substr(video.lastIndexOf('.')).slice(1) 
-        const key = genKey() + `.${extension}`
-        readStream.on('error', (err) => {
-            console.log(err)
-        })
-        const putCommand = new PutObjectCommand({
-            Bucket: BUCKET_NAME,
-            Key: key, 
-            ContentType: extension,
-            Body: readStream,
-            ContentDisposition: 'inline'
-        })
-        const response = await s3.send(putCommand)
-        console.log(response)
-        return key 
-    }catch(err){
-        console.log('uploadVideoToS3 Error', err)
-        throw err
-    }
-}
-async function uploadImageToS3(folderPath, image){
-    try{
-        const readStream = fs.createReadStream(path.join(folderPath, image))
-        const extension = image.substr(image.lastIndexOf('.')).slice(1)
-        const key = genKey() + `.${extension}`
 
-        readStream.on('error', (err) => console.log(err))
-
-        const putCommand = new PutObjectCommand({
-            Bucket: BUCKET_NAME,
-            Key: key,
-            Body: readStream,
-            ContentType: extension
-        })
-        const response = await s3.send(putCommand)
-        console.log(response)
-        return key 
-    }catch(err){
-        console.log(err)
-        throw err
-    }
-}
 async function invalidateCash(objectKey){
     try{
         const invalidateCommand = new CreateInvalidationCommand({
@@ -235,5 +212,4 @@ module.exports = {
     deleteLocalFiles, 
     deleteFromS3, 
     invalidateCash,
-    TestVerifyInputs
 }

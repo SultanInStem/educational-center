@@ -31,7 +31,6 @@ const uploadHomework = async(req, res, next) =>{
     session.startTransaction()
     try{
         const {question, options, lessonId, correctAnswer} = await verifyInput(req.body)
-        if(!data) throw new BadRequest("Invalid input")
         const homework = new Homework({
             question: question,
             options: options,
@@ -148,7 +147,7 @@ const changeTimeOut = async (req, res, next) =>{
 const verifyHomework = async(data) => {
     try{
         const answers = joi.object({
-            correctAnswer: joi.string().min(1),
+            id: joi.string().min(6),
             chosenAnswer: joi.string().min(1)
         })
         const answersSchema = joi.array().items(answers)
@@ -167,19 +166,24 @@ const checkHomework = async(req, res, next) =>{
         if(!lessonId) throw new BadRequest("Lesson ID is necessary for the request")
         const lesson = await Lesson.findById(lessonId)
         if(!lesson) throw new NotFound(`Lesson with Id ${lessonId} not found`)
-        const homeworkArr = await verifyHomework(data)
-        let hwScore = 0 
-        for(let i = 0; i < homeworkArr.length; i++){
-            const chosenAnswer = homeworkArr[i].chosenAnswer 
-            const correctAnswer = homeworkArr[i].correctAnswer 
-            homeworkArr[i].chosenAnswer = chosenAnswer.replace(/[.\s]/g, '').toLowerCase()
-            homeworkArr[i].correctAnswer = correctAnswer.replace(/[.\s]/g, '').toLowerCase()
-            if(homeworkArr[i].chosenAnswer === homeworkArr[i].correctAnswer){
-                hwScore += 1
-            }
+        const receivedHomework = await verifyHomework(data)
+        if(receivedHomework.length !== lesson.homework.length){
+            throw new BadRequest("Some homework is missing")
         }
-        hwScore = (hwScore / homeworkArr.length) * 100 
-        console.log('Score', hwScore)
+        let hwScore = 0 
+        const actualHomework = await Homework.find({lessonId})
+        const hashMap = {}
+        actualHomework.forEach(answer => {
+            hashMap[answer._id] = answer.correctAnswer
+        })
+        receivedHomework.forEach(element =>{
+            const chosenAnswer = element.chosenAnswer 
+            const correctAnswer = hashMap[element.id]
+            if(chosenAnswer === correctAnswer){
+                hwScore++;
+            }
+        })
+        hwScore = (hwScore / actualHomework.length) * 100 
         if(hwScore < 70){
             // think about msg 
             return res.status(StatusCodes.OK).json({msg: 'score is not sufficient to complete this lesson, try again please'})
@@ -196,15 +200,14 @@ const checkHomework = async(req, res, next) =>{
         user.completedLessons.push(lessonId) 
 
         const currentScore = user.completedLessons.length / course.lessons.length 
-
+        console.log(user.completedLessons.length, course.lessons.length)
         if(currentScore < 1){
             const updatedUser = await User.findOneAndUpdate({_id: userId}, {
                 currentScore: currentScore,
                 $push: {completedLessons: lessonId}
-            })
+            }, {new: true})
             return res.status(StatusCodes.OK).json({msg: 'you completed the lesson', updatedUser})
         }else if(currentScore >= 1 && user.progressScore + 1 !== 6){
-            // when user completes any course RATHER THAN ielts 
             const nextCourse = await Course.findOne({minScore: user.progressScore + 1})
             if(!nextCourse) return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({err: "Ooops, something went wrong"})
             const updatedUser = await User.findOneAndUpdate({_id: userId}, 
@@ -217,6 +220,8 @@ const checkHomework = async(req, res, next) =>{
                 }, {new: true})
             return res.status(StatusCodes.OK).json({msg: 'you completed the course!!!', updatedUser})
         }else if(currentScore >= 1 && user.progressScore + 1 === 6){
+            // when user completes IELTS score there is no other course to take next 
+            // that's why we handle this case differently 
             const updatedUser = await User.findOneAndUpdate({_id: userId}, 
                 { 
                     progressScore: 6, 

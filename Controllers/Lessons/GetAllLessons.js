@@ -15,7 +15,7 @@ async function verifyUserProgress(userId, courseName){
         const course = await Course.findOne({name: courseName})
         if(!course) throw new NotFound('Course not found')
         if(user.progressScore >= course.minScore){
-            return {course, minScore: course.minScore}
+            return {course, minScore: course.minScore, currentProgress: user.currentScore}
         }else{
             return false
         }
@@ -37,6 +37,7 @@ const getAllLessons = async (req, res, next) => {
     try{
         if(!isAllowed) throw new Unauthorized('You are not authorized to access this resource')
         const lessons = isAllowed.course.lessons  
+        const currentProgress = isAllowed.currentProgress
         const lessonArray = []
         for(const item of lessons){
             const lesson = await Lesson.findOne({_id: item, course: courseName})
@@ -55,7 +56,7 @@ const getAllLessons = async (req, res, next) => {
                 lessonArray.push(temp)
             }
         } 
-        return res.status(StatusCodes.OK).json({lessons: lessonArray})
+        return res.status(StatusCodes.OK).json({lessons: lessonArray, currentProgress})
     }catch(err){
         return next(err) 
     }

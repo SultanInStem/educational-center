@@ -4,7 +4,7 @@ const authenticate = require('../middleware/authenticate')
 const multer = require('multer') 
 const verifyAdmin = require('../middleware/verifyAdmin')
 const path = require('path')
-const {getAllLessons, getLesson, DeleteLesson, CreateLessonInEnglish, createLessonRuz, TestVerifyInputs} = require('../Controllers/Lessons')
+const {getAllLessons, getLesson, DeleteLesson, CreateLessonInEnglish, createLessonRuz} = require('../Controllers/Lessons')
 
 const storage = multer.diskStorage({
     destination: function(req, file, cb){
@@ -29,7 +29,7 @@ const dataScheamaRuz = [
     {name: 'jsondata'}, 
     {name: 'image', maxCount: 1}]
 
-router.post('/english', [ verifyAdmin, upload.fields(dataSchemaEnglish) ], TestVerifyInputs)
+router.post('/english', [ verifyAdmin, upload.fields(dataSchemaEnglish) ], CreateLessonInEnglish)
 router.post('/ruz', [ verifyAdmin, upload.fields(dataScheamaRuz) ], createLessonRuz) 
 router.get('/single', authenticate, getLesson) // single?lessonId&level
 router.get('/:course', authenticate, getAllLessons)    

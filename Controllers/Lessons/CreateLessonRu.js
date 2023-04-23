@@ -171,7 +171,7 @@ const createLessonRuz = async(req, res, next) =>{
             console.log(response)
         }
         await lesson.save({session})
-        const course = await Course.findOneAndUpdate({name: json.course}, { // error done on purpose 
+        const course = await Course.findOneAndUpdate({name: json.course}, { 
             $push: {lessons: lesson._id}
         }, {new: true, session})
         if(!course){

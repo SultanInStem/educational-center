@@ -18,6 +18,4 @@ const upload = multer({storage})
 router.post('/', [verifyAdmin, upload.array('files')], uploadLessonFiles)
 
 
-
-
 module.exports = router 

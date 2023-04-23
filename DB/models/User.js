@@ -57,6 +57,10 @@ const UserSchema = new mongoose.Schema({
     },
     course: {
         type: String
+    },
+    canComment: {
+        type: Boolean,
+        default: true
     }
 }, {timestamps: true})
 

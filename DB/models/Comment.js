@@ -8,6 +8,17 @@ const CommentSchema = new mongoose.Schema({
     createdBy: {
         type: mongoose.Types.ObjectId,
         required: true
+    }, 
+    lessonId: {
+        type: String
+    }, 
+    likes: {
+        type: Array,
+        default: []
+    }, 
+    disLikes: {
+        type: Array,
+        default: []
     }    
 }, {timestamps: true})
 

@@ -2,6 +2,7 @@ const { S3, PutObjectCommand, DeleteObjectCommand } = require('@aws-sdk/client-s
 const { NotFound, BadRequest } = require('../../Error/ErrorSamples')
 const { StatusCodes } = require('http-status-codes')
 const Lesson = require('../../DB/models/Lesson')
+const {s3, CloudFront} = require('../../imports')
 const { deleteLocalFiles } = require('../Lessons/CreateLessonEng')
 const joi = require('joi')
 const path = require('path')
@@ -9,23 +10,9 @@ const genKey = require('../../helperFuncs/genS3Key')
 const fs = require('fs')
 const { CreateInvalidationCommand, CloudFrontClient } = require('@aws-sdk/client-cloudfront')
 
-const s3 = new S3({
-    credentials: {
-        accessKeyId: process.env.AWS_ACCESS_KEY,
-        secretAccessKey: process.env.AWS_SECRET_KEY
-    },
-    region: process.env.AWS_REGION 
-})
-
-const CloudFront = new CloudFrontClient({
-    credentials: {
-        accessKeyId: process.env.AWS_ACCESS_KEY,
-        secretAccessKey: process.env.AWS_SECRET_KEY
-    },
-    region: process.env.AWS_REGION   
-})
 
 const uploadLessonFiles = async (req, res, next)=>{
+    console.log('hello world')
     const {lessonId} = req.body 
     const validationSchema = joi.object({
         lessonId: joi.string().min(6)
