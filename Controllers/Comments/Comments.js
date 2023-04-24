@@ -45,11 +45,15 @@ const createComment = async(req, res, next) =>{
         if(!lessonId) throw new BadRequest("Invalid request")
         else if(!commentText) throw new BadRequest("Cannot add empty comment")
         else if(commentText.length > 60) throw new BadRequest("Maximum length of the comment is 60")
-        const user = await User.findById(userId)
+        const user = await User.findById(userId, {canComment: 1, progressScore: 1})
         if(!user) throw new Forbidden("You are not allowed to add comments")
         const comment = new Comment({comment: commentText, createdBy: userId, lessonId: lessonId})
-        const lesson = await Lesson.findOneAndUpdate({_id: lessonId}, {$push: {comments: comment._id}}, {session})
-        const course = await Course.findOne({name: lesson.course})
+        const lesson = await Lesson.findOneAndUpdate(
+            {_id: lessonId}, 
+            {$push: {comments: comment._id}}, 
+            {session, projection: {course: 1}}
+        )
+        const course = await Course.findOne({name: lesson.course}, {name: 1, minScore: 1})
         isAllowedToComment(user, course)
         await comment.save({session})
         if(!lesson){
@@ -145,12 +149,13 @@ const getComments = async (req, res, next) =>{
     const lessonId = req.params?.lessonId
     try{
         if(!lessonId) throw new BadRequest("Lesson ID is missing")
-        const lesson = await Lesson.findById(lessonId)
+        const lesson = await Lesson.findById(lessonId, {comments: 1})
         if(!lesson) throw new NotFound(`Lesson with Id ${lessonId} not found`)
         const comments = await Comment.find({lessonId: lessonId})
         const data = []
         const hashMap = {}
         // later limit the number of comments your are sending per request 
+        // P.s use pagination
         for(let i = 0; i < comments.length; i++){ // significantly boosts performance 
             const commentObject = comments[i]
             const obj = {

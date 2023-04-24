@@ -12,7 +12,6 @@ const { CreateInvalidationCommand, CloudFrontClient } = require('@aws-sdk/client
 
 
 const uploadLessonFiles = async (req, res, next)=>{
-    console.log('hello world')
     const {lessonId} = req.body 
     const validationSchema = joi.object({
         lessonId: joi.string().min(6)
@@ -25,7 +24,7 @@ const uploadLessonFiles = async (req, res, next)=>{
             return next(error)
         }
         await validateInputs(folderPath)
-        const lesson = await Lesson.findById(lessonId)
+        const lesson = await Lesson.findById(lessonId, {files: 1})
         if(!lesson) throw new NotFound('Lesson Not Found') 
         const files = req.files 
         if(files.length < 1) throw new BadRequest('No Files to Upload') 
@@ -44,11 +43,15 @@ const uploadLessonFiles = async (req, res, next)=>{
                 name: modifiedFiles[i].originalname,
                 awsKey: modifiedFiles[i].awsKey
             }
-            lesson.files.push(file) 
+            lesson.files.push(file)
             const response = await uploadToS3(folderPath, modifiedFiles[i])
             console.log(response)
         }
-        const updatedLesson = await Lesson.findOneAndUpdate({_id: lessonId}, lesson, {new: true})
+        const updatedLesson = await Lesson.findOneAndUpdate(
+            {_id: lessonId},
+            {$set: {files: lesson.files}},
+            {projection: {files: 1}, new: true}
+        )
         if(!updatedLesson) throw new BadRequest('Failed to updated the lesson')
         return res.status(StatusCodes.CREATED).json({msg: 'Files have been uploaded', success: true})
     }catch(err){

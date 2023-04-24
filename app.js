@@ -11,7 +11,7 @@ const FilesRouter = require('./Routes/Files')
 const HomeworkRouter = require('./Routes/Homework')
 const CommentRouter = require('./Routes/Comments')
 const UserRouter = require('./Routes/User')
-
+const CoursesRouter = require('./Routes/Courses')
 
 const cors = require('cors')
 const {NotFound} = require('./Error/NotFound')
@@ -30,6 +30,7 @@ app.use('/api/v1/files', FilesRouter)
 app.use('/api/v1/users', UserRouter)
 app.use('/api/v1/lessons/homework', HomeworkRouter)
 app.use('/api/v1/lessons/comments', CommentRouter)
+app.use('/api/v1/courses', CoursesRouter)
 
 app.use(ErrorHandler)
 app.use(NotFound)

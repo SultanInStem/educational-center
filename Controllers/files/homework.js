@@ -38,9 +38,19 @@ const uploadHomework = async(req, res, next) =>{
             lessonId: lessonId
         })
         const uploadedHomework = await homework.save({session})
+        const projection = {
+            propertyToExclude: 0, 
+            comments: 0,
+            description: 0,
+            title: 0,
+            files: 0,
+            videos: 0,
+            thumbNail: 0
+        }
         const lesson = await Lesson.findByIdAndUpdate(lessonId, {
             $push: {homework: homework._id}
-        }, {session})
+        }, {session, projection})
+        console.log(lesson)
         if(!lesson) {
             abortTransaction = true
             throw new NotFound(`Lesson with ID '${data.lessonId}' not found`)
@@ -119,7 +129,13 @@ const getHomework = async(req, res, next) =>{
     const lessonId = req?.params?.lessonId
     try{
         if(!lessonId) throw new BadRequest("Lesson ID is missing")
-        const lesson = await Lesson.findOne({_id: lessonId})
+        const lesson = await Lesson.findOne({_id: lessonId}, 
+            {
+                homework: 1,
+                homeworkTimeOutMinutes: 1,
+                course: 1,
+            })
+        console.log(lesson)
         if(!lesson) throw new NotFound(`Lesson with ID '${lessonId}' does not exist`)
         const homeworkArray = lesson.homework 
         if(homeworkArray.length < 1) return res.status(StatusCodes.OK).json({homework: []})
@@ -135,9 +151,13 @@ const changeTimeOut = async (req, res, next) =>{
         if(!lessonId) throw new BadRequest("Lesson ID is missing")
         const {timeOutMinutes} = req.body
         if(!timeOutMinutes || timeOutMinutes === 0) throw new BadRequest("Time out cannot be set to zero!")
-        const lesson = await Lesson.findOneAndUpdate({_id: lessonId}, {homeworkTimeOutMinutes: timeOutMinutes}, {new: true})
+        const projection = {homeworkTimeOutMinutes: 1, }
+        const lesson = await Lesson.findOneAndUpdate(
+            {_id: lessonId},
+            {homeworkTimeOutMinutes: timeOutMinutes},
+            {new: true, projection})
         if(!lesson) throw new BadRequest(`Lesson with ID '${lessonId}' not found`)
-        return res.status(StatusCodes.OK).json({msg: 'timeout has been updated'})
+        return res.status(StatusCodes.OK).json({msg: 'timeout has been updated', timeOut: lesson.homeworkTimeOutMinutes})
     }catch(err){
         return next(err)
     }
@@ -164,7 +184,10 @@ const checkHomework = async(req, res, next) =>{
     const data = req.body?.homework
     try{
         if(!lessonId) throw new BadRequest("Lesson ID is necessary for the request")
-        const lesson = await Lesson.findById(lessonId)
+        const lesson = await Lesson.findById(lessonId, {
+            homework: 1,
+            course: 1
+        })
         if(!lesson) throw new NotFound(`Lesson with Id ${lessonId} not found`)
         const receivedHomework = await verifyHomework(data)
         if(receivedHomework.length !== lesson.homework.length){
@@ -188,19 +211,22 @@ const checkHomework = async(req, res, next) =>{
             // think about msg 
             return res.status(StatusCodes.OK).json({msg: 'score is not sufficient to complete this lesson, try again please'})
         }
-        const user = await User.findById(userId)
+        const projection = {progressScore: 1, course: 1}
+        const queryUser = {
+            completedLessons: 1,
+            completedCourses: 1,
+            progressScore: 1
+        }
+        const user = await User.findById(userId, queryUser)
+        if(!user) throw new NotFound("User Not Found")
         const course = await Course.findOne({name: lesson.course})
         if(!course) throw new NotFound("Course not found")
         if(user.completedLessons.includes(lesson._id) || user.completedCourses.includes(course._id)){
             // prevents user from submiting the same homework twice 
             return res.status(StatusCodes.OK).json({msg: 'you already completed this lesson ;)'})
         }
-
-        // handle exceptions later on here 
         user.completedLessons.push(lessonId) 
-
         const currentScore = user.completedLessons.length / course.lessons.length 
-        console.log(user.completedLessons.length, course.lessons.length)
         if(currentScore < 1){
             const updatedUser = await User.findOneAndUpdate({_id: userId}, {
                 currentScore: currentScore,
@@ -217,16 +243,16 @@ const checkHomework = async(req, res, next) =>{
                     currentScore: 0,
                     completedLessons: [],
                     $push: {completedCourses: course._id}
-                }, {new: true})
+                }, {new: true, projection})
             return res.status(StatusCodes.OK).json({msg: 'you completed the course!!!', updatedUser})
         }else if(currentScore >= 1 && user.progressScore + 1 === 6){
-            // when user completes IELTS score there is no other course to take next 
-            // that's why we handle this case differently 
+            // when user comeplted IELTS course 
+            // there is no courses left, hence we handle this case differently
             const updatedUser = await User.findOneAndUpdate({_id: userId}, 
                 { 
                     progressScore: 6, 
                     $push: {completedCourses: course._id}
-                }, {new: true})
+                }, {new: true, projection})
             return res.status(StatusCodes.OK).json({msg: "You have completed final course congrats!!!", updatedUser})
         }
         return res.status(StatusCodes.OK).json({msg: 'oki'})

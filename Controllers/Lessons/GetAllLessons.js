@@ -1,4 +1,3 @@
-const { Unauthorized, NotFound } = require('../../Error/ErrorSamples')
 const { getSignedUrl } = require('@aws-sdk/cloudfront-signer')
 const { StatusCodes } = require('http-status-codes')
 const Course = require('../../DB/models/Course')
@@ -6,22 +5,31 @@ const { levelsArray } = require('../../imports')
 const Lesson = require('../../DB/models/Lesson')
 const User = require('../../DB/models/User')
 const joi = require('joi')
-const PRIVATE_KEY = process.env.PRIVATE_KEY
-const KEY_PAIR_ID = process.env.AWS_CLOUD_KEY_PAIR_ID 
+const { NotFound, Forbidden } = require('../../Error/ErrorSamples')
+const getUrl = require('../../helperFuncs/getUrl')
 
 async function verifyUserProgress(userId, courseName){
     try{
-        const user = await User.findOne({_id: userId})
+        const user = await User.findById(userId, {
+            profilePicture: 1,
+            progressScore: 1,
+            completedLessons: 1,
+            completedCourses: 1,
+            currentScore: 1,
+            isAdmin: 1,
+            course: 1
+        })
+        if(!user) throw new NotFound("User not Found")
         const course = await Course.findOne({name: courseName})
-        if(!course) throw new NotFound('Course not found')
-        if(user.progressScore >= course.minScore){
-            return {course, minScore: course.minScore, currentProgress: user.currentScore}
-        }else{
-            return false
+        if(!course) throw new NotFound("Course not Found")
+        
+        if(user.progressScore < course.minScore){
+            throw new Forbidden("Not ALlowed to Access This Course Yet")
+        }else if(user.progressScore >= course.minScore){
+            return {user, course}
         }
     }catch(err){
-        console.log(err)
-        throw err 
+        throw err
     }
 }
 
@@ -31,32 +39,31 @@ const getAllLessons = async (req, res, next) => {
     })
     const {error, value} = ValidationSchema.validate(req.params)
     if(error) return next(error)
+    const userId = req.userId
     const courseName = value.course.toUpperCase()
-    const userId = req.userId 
-    const isAllowed = await verifyUserProgress(userId, courseName)
     try{
-        if(!isAllowed) throw new Unauthorized('You are not authorized to access this resource')
-        const lessons = isAllowed.course.lessons  
-        const currentProgress = isAllowed.currentProgress
-        const lessonArray = []
-        for(const item of lessons){
-            const lesson = await Lesson.findOne({_id: item, course: courseName})
-            if(lesson){
-                const temp = {
-                    title: lesson.title,
-                    description: lesson.description,
-                    id: lesson._id,
-                }
-                temp.image = getSignedUrl({
-                    url: process.env.AWS_CLOUD_DOMAIN + `/${lesson.thumbNail}`,
-                    privateKey: PRIVATE_KEY,
-                    keyPairId: KEY_PAIR_ID,
-                    dateLessThan: new Date(Date.now() + 1000 * 60 * 60 * 36)
-                }) 
-                lessonArray.push(temp)
+        const {user, course} = await verifyUserProgress(userId, courseName)
+        const lessons = await Lesson.find({course: course.name}, {
+            title: 1,
+            thumbNail: 1,
+            course: 1
+        })
+        const filteredLessons = []
+        for(const lesson of lessons){
+            let isCompleted = false 
+            if(user.completedCourses.includes(course._id) || user.completedLessosn.includes(lesson._id)){
+                isCompleted = true 
+            } 
+            const obj = {
+                lessonId: lesson._id,
+                lessonPicture: getUrl(lesson.thumbNail),
+                isCompleted,
+                title: lesson.title
             }
-        } 
-        return res.status(StatusCodes.OK).json({lessons: lessonArray, currentProgress})
+            filteredLessons.push(obj)
+        }
+        const score = user.completedCourses.includes(course._id) ? 1 : user.currentScore
+        return res.status(StatusCodes.OK).json({lessons: filteredLessons, currentScore: score})
     }catch(err){
         return next(err) 
     }
