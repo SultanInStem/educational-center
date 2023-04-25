@@ -1,12 +1,12 @@
 const { S3, PutObjectCommand, DeleteObjectCommand } = require('@aws-sdk/client-s3')
-const { NotFound, BadRequest } = require('../../Error/ErrorSamples')
+const { NotFound, BadRequest } = require('../../../Error/ErrorSamples')
 const { StatusCodes } = require('http-status-codes')
-const Lesson = require('../../DB/models/Lesson')
-const {s3, CloudFront} = require('../../imports')
-const { deleteLocalFiles } = require('../Lessons/CreateLessonEng')
+const Lesson = require('../../../DB/models/Lesson')
+const {s3, CloudFront} = require('../../../imports')
+const { deleteLocalFiles } = require('../../../helperFuncs/deleteLocalFiles')
 const joi = require('joi')
 const path = require('path')
-const genKey = require('../../helperFuncs/genS3Key')
+const genKey = require('../../../helperFuncs/genS3Key')
 const fs = require('fs')
 const { CreateInvalidationCommand, CloudFrontClient } = require('@aws-sdk/client-cloudfront')
 
@@ -153,6 +153,4 @@ async function validateInputs(folderPath){
         throw err 
     }
 }
-module.exports = {
-    uploadLessonFiles
-}
+module.exports = uploadLessonFiles

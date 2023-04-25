@@ -1,7 +1,7 @@
 const {PutObjectCommand, DeleteObjectCommand} = require('@aws-sdk/client-s3')
 const {CreateInvalidationCommand} = require('@aws-sdk/client-cloudfront')
 const { BadRequest } = require('../../Error/ErrorSamples')
-const {deleteLocalFiles} = require('./CreateLessonEng')
+const { deleteLocalFiles } = require('../../../helperFuncs/deleteLocalFiles')
 const isVideo = require('../../helperFuncs/isVideo')
 const isImage = require('../../helperFuncs/isImage')
 const genKey = require('../../helperFuncs/genS3Key')

@@ -1,19 +1,20 @@
-const {PutObjectCommand, DeleteObjectCommand} = require('@aws-sdk/client-s3')
-const  {CreateInvalidationCommand} = require('@aws-sdk/client-cloudfront')
-const {s3, CloudFront, levelsArray} = require('../../imports')
-const { BadRequest, CustomError }= require('../../Error/ErrorSamples')
+const { PutObjectCommand, DeleteObjectCommand } = require('@aws-sdk/client-s3')
+const  { CreateInvalidationCommand } = require('@aws-sdk/client-cloudfront')
+const {s3, CloudFront, levelsArray} = require('../../../imports')
+const { BadRequest, CustomError }= require('../../../Error/ErrorSamples')
+const { deleteLocalFiles } = require('../../../helperFuncs/deleteLocalFiles')
 const { StatusCodes } = require('http-status-codes')
-const genKey = require('../../helperFuncs/genS3Key')
-const isImage = require('../../helperFuncs/isImage')
-const isVideo = require('../../helperFuncs/isVideo')
-const Lesson = require('../../DB/models/Lesson')
-const Course = require('../../DB/models/Course')
+const genKey = require('../../../helperFuncs/genS3Key')
+const isImage = require('../../../helperFuncs/isImage')
+const isVideo = require('../../../helperFuncs/isVideo')
+const Lesson = require('../../../DB/models/Lesson')
+const Course = require('../../../DB/models/Course')
 const mongoose = require('mongoose')
 const path = require('path')
 const joi = require('joi')
 const fs = require('fs')
 const BUCKET_NAME = process.env.AWS_BUCKET_NAME  
-const uploadsFolder = path.join(__dirname, '..', '..', 'uploads')
+const uploadsFolder = path.join(__dirname, '..', '..', '..', 'uploads')
 
 const uploadFilesToS3 = async (file) =>{
     console.log('Im on it...')
@@ -37,7 +38,7 @@ const uploadFilesToS3 = async (file) =>{
     }
 }
 
-const CreateLessonInEnglish = async(req, res, next) =>{
+const createLessonInEnglish = async(req, res, next) =>{
     const session = await mongoose.startSession()
     session.startTransaction()
     let abortTransaction = false 
@@ -135,44 +136,13 @@ async function verifyInputs(req){
               resolve(files); // pass the result to the callback function
             });
         });
-        return {jsondata: parsedJson}
+        return {jsondata: parsedJson} 
     }catch(err){
         console.log('uploads folder', uploadsFolder)
         await deleteLocalFiles(uploadsFolder)
         throw err
     }
 }
-function deleteLocalFiles(folderPath){
-    return new Promise((resolve, reject) =>{
-        fs.readdir(folderPath, function(err, files){
-            if(err){
-                console.log(err)
-                reject(err)
-                return 
-            }
-            const deletePromises = files.map((file) =>{
-                return new Promise((resolve, reject)=>{
-                    fs.unlink(path.join(folderPath, file), function(err){
-                        if(err){
-                            reject(err)
-                        }else{
-                            resolve()
-                        }
-                    })
-                })
-            })
-            Promise.all(deletePromises)
-            .then(() => {
-                console.log('All files have been deleted')
-                resolve()
-            }).catch(err =>{
-                console.log(`Failes to delete all files in folder ${folderPath}`)
-                reject(err)
-            })
-        })
-    })
-}
-
 async function invalidateCash(objectKey){
     try{
         const invalidateCommand = new CreateInvalidationCommand({
@@ -207,9 +177,5 @@ async function deleteFromS3(objectKey){
         throw err
     }
 }
-module.exports = {
-    CreateLessonInEnglish,
-    deleteLocalFiles, 
-    deleteFromS3, 
-    invalidateCash,
-}
+
+module.exports = createLessonInEnglish

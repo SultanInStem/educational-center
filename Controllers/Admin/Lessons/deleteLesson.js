@@ -1,14 +1,14 @@
 const { CreateInvalidationCommand } = require('@aws-sdk/client-cloudfront')
-const { BadRequest, NotFound } = require('../../Error/ErrorSamples')
+const { BadRequest, NotFound } = require('../../../Error/ErrorSamples')
 const { DeleteObjectCommand } = require('@aws-sdk/client-s3')
 const { StatusCodes } = require('http-status-codes')
-const { s3, CloudFront } = require('../../imports')
-const Lesson = require('../../DB/models/Lesson')
-const Course = require('../../DB/models/Course')
+const { s3, CloudFront } = require('../../../imports')
+const Lesson = require('../../../DB/models/Lesson')
+const Course = require('../../../DB/models/Course')
 const mongoose = require('mongoose')
 
 
-const DeleteLesson = async (req, res, next) =>{
+const deleteLesson = async (req, res, next) =>{
     const lessonId = req.params.id 
     if(!lessonId) throw new BadRequest('Please provide valid params for the url') 
     const session = await mongoose.startSession()
@@ -96,4 +96,5 @@ async function invalidateCash(id){
         throw err 
     }
 }
-module.exports = { DeleteLesson } 
+
+module.exports = deleteLesson

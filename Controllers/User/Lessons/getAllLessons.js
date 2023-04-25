@@ -1,37 +1,10 @@
-const { getSignedUrl } = require('@aws-sdk/cloudfront-signer')
 const { StatusCodes } = require('http-status-codes')
-const Course = require('../../DB/models/Course')
-const { levelsArray } = require('../../imports')
-const Lesson = require('../../DB/models/Lesson')
-const User = require('../../DB/models/User')
+const { levelsArray } = require('../../../imports')
+const Lesson = require('../../../DB/models/Lesson')
 const joi = require('joi')
-const { NotFound, Forbidden } = require('../../Error/ErrorSamples')
-const getUrl = require('../../helperFuncs/getUrl')
-
-async function verifyUserProgress(userId, courseName){
-    try{
-        const user = await User.findById(userId, {
-            profilePicture: 1,
-            progressScore: 1,
-            completedLessons: 1,
-            completedCourses: 1,
-            currentScore: 1,
-            isAdmin: 1,
-            course: 1
-        })
-        if(!user) throw new NotFound("User not Found")
-        const course = await Course.findOne({name: courseName})
-        if(!course) throw new NotFound("Course not Found")
-        
-        if(user.progressScore < course.minScore){
-            throw new Forbidden("Not ALlowed to Access This Course Yet")
-        }else if(user.progressScore >= course.minScore){
-            return {user, course}
-        }
-    }catch(err){
-        throw err
-    }
-}
+const { NotFound, Forbidden } = require('../../../Error/ErrorSamples')
+const getUrl = require('../../../helperFuncs/getUrl')
+const { verifyUserProgress } = require('../../../helperFuncs/verifyUserProgress')
 
 const getAllLessons = async (req, res, next) => {
     const ValidationSchema = joi.object({
@@ -69,9 +42,4 @@ const getAllLessons = async (req, res, next) => {
     }
 }
 
-
-
-module.exports = {
-    getAllLessons,
-    verifyUserProgress
-}
+module.exports = getAllLessons

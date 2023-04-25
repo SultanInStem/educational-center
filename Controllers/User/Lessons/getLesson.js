@@ -1,12 +1,10 @@
-const Lesson = require('../../DB/models/Lesson')
-const { BadRequest, Unauthorized, NotFound } = require('../../Error/ErrorSamples')
+const { BadRequest, Unauthorized, NotFound } = require('../../../Error/ErrorSamples')
+const { verifyUserProgress } = require('../../../helperFuncs/verifyUserProgress')
+const getUrl = require('../../../helperFuncs/getUrl')
 const { StatusCodes } = require('http-status-codes')
-const getUrl = require('../../helperFuncs/getUrl')
-const User = require('../../DB/models/User')
-const Course = require('../../DB/models/Course')
-const { verifyUserProgress } = require('./GetAllLessons')
+const Lesson = require('../../../DB/models/Lesson')
+const { levelsArray } = require('../../../imports')
 const joi = require('joi')
-const { levelsArray } = require('../../imports')
 
 const joiValidation = (course) =>{
     try{
@@ -64,4 +62,4 @@ const getLesson = async(req, res, next) =>{
     }
 }
 
-module.exports = {getLesson}
+module.exports = getLesson

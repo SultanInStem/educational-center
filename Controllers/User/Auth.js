@@ -1,12 +1,12 @@
-const User = require('../DB/models/User')
+const User = require('../../DB/models/User')
 const joi = require('joi')
-const {createAccessToken, createRefreshToken} = require('../tokens/generateTokens')
+const {createAccessToken, createRefreshToken} = require('../../tokens/generateTokens')
 const {StatusCodes} = require('http-status-codes')
-const {getTime} = require('../helperFuncs/getTime')
-const Course = require('../DB/models/Course')
+const {getTime} = require('../../helperFuncs/getTime')
+const Course = require('../../DB/models/Course')
 const jwt = require('jsonwebtoken')
-const {Unauthorized, BadRequest, NotFound} = require('../Error/ErrorSamples')
-const {levelsArray} = require('../imports')
+const {Unauthorized, BadRequest, NotFound} = require('../../Error/ErrorSamples')
+const {levelsArray} = require('../../imports')
 const SignUp = async(req, res, next) =>{
     const signupSchema = joi.object({
         name: joi.string().required().min(3).max(40),
