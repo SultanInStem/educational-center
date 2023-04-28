@@ -1,6 +1,10 @@
 const User = require('../../../DB/models/User')
 const Lesson = require('../../../DB/models/Lesson')
 const Comment = require('../../../DB/models/Comment')
+const { NotFound, Forbidden, BadRequest } = require('../../../Error/ErrorSamples')
+const Course = require('../../../DB/models/Course')
+const { StatusCodes } = require('http-status-codes')
+const mongoose = require('mongoose')
 const isAllowedToComment = (user, course) => {
     try{
         if(!course){

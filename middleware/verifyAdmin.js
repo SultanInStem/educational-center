@@ -18,7 +18,8 @@ const verifyAdmin = async (req, res, next) => {
             next()
         })
     }catch(err){
-        return ErrorHandler(err)
+        console.log(err)
+        return ErrorHandler(err, req, res)
     }
 }
 

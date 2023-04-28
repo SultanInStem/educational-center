@@ -1,4 +1,6 @@
 const Comment = require('../../../DB/models/Comment') 
+const { BadRequest, NotFound } = require('../../../Error/ErrorSamples')
+const { StatusCodes } = require('http-status-codes')
 const disLikeComment = async(req, res, next) =>{
     const userId = req.userId  
     const {commentId, lessonId} = req.query 

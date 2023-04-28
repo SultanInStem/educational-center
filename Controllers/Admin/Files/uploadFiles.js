@@ -9,14 +9,14 @@ const path = require('path')
 const genKey = require('../../../helperFuncs/genS3Key')
 const fs = require('fs')
 const { CreateInvalidationCommand, CloudFrontClient } = require('@aws-sdk/client-cloudfront')
-
+const folderPath = path.join(__dirname, '..', '..', '..', 'uploads')
 
 const uploadLessonFiles = async (req, res, next)=>{
+    console.log(req.files)
     const {lessonId} = req.body 
     const validationSchema = joi.object({
         lessonId: joi.string().min(6)
     })
-    const folderPath = path.join(__dirname, '..', '..', 'uploads')
     let modifiedFiles = []
     try{
         const {error, value} = validationSchema.validate({lessonId}) 
@@ -28,9 +28,8 @@ const uploadLessonFiles = async (req, res, next)=>{
         if(!lesson) throw new NotFound('Lesson Not Found') 
         const files = req.files 
         if(files.length < 1) throw new BadRequest('No Files to Upload') 
-
         modifiedFiles = files.map(item =>{
-            let key = (genKey() + item.originalname)
+            let key = (genKey(16) + item.originalname)
             key = key.replace(/[^a-zA-Z0-9]/g, '')
             return {
                 originalname: item.originalname,
@@ -38,6 +37,7 @@ const uploadLessonFiles = async (req, res, next)=>{
                 mimetype: item.mimetype 
             }
         })
+        console.log("modifiedFiles", modifiedFiles)
         for(let i = 0; i < modifiedFiles.length; i++){
             const file = {
                 name: modifiedFiles[i].originalname,

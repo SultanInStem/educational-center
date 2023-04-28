@@ -3,7 +3,6 @@ const mongoose = require('mongoose')
 const joi = require('joi')
 const { MulterError } = require('multer')
 const {CustomError} = require('./ErrorSamples')
-const {S3} = require('@aws-sdk/client-s3')
 const { MongoServerError } = require('mongodb')
 const ErrorHandler = (err, req, res, next) =>{
     
@@ -46,7 +45,6 @@ const ErrorHandler = (err, req, res, next) =>{
 
         console.log('Custom Error')
         return res.status(err.statusCode).json({err: err.message})
-
     }else if(err.name === 'InvalidAccessKeyId'){
 
         console.log('InvalidAccessKey Error')

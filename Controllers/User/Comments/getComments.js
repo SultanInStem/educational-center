@@ -2,6 +2,7 @@ const Lesson = require('../../../DB/models/Lesson')
 const Comment = require('../../../DB/models/Comment')
 const User = require('../../../DB/models/User')
 const getUrl = require('../../../helperFuncs/getUrl')
+const { StatusCodes } = require('http-status-codes')
 const getComments = async (req, res, next) =>{
     const lessonId = req.params?.lessonId
     try{

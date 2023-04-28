@@ -1,8 +1,10 @@
-const router = require('./index')
+const express = require('express')
+const router = express.Router()
 const multer = require('multer')
 const createLessonEng = require('../../Controllers/Admin/Lessons/createLessonEng')
 const createLessonRuz = require('../../Controllers/Admin/Lessons/createLessonRuz')
 const deleteLesson = require('../../Controllers/Admin/Lessons/deleteLesson')
+const path = require('path')
 
 const storage = multer.diskStorage({
     destination: function(req, file, cb){
@@ -27,6 +29,10 @@ const dataScheamaRuz = [
     {name: 'jsondata'}, 
     {name: 'image', maxCount: 1}]
 
-router.post('/lessons/english', upload.fields(dataSchemaEnglish), createLessonEng)
-router.post('/lessons/ruz', upload.fields(dataScheamaRuz), createLessonRuz)
-router.delete('/lessons/:id', deleteLesson)
+    
+router.post('/english', upload.fields(dataSchemaEnglish), createLessonEng)
+router.post('/ruz', upload.fields(dataScheamaRuz), createLessonRuz)
+router.delete('/:id', deleteLesson)
+
+
+module.exports = router

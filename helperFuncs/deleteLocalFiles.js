@@ -1,3 +1,5 @@
+const fs = require('fs')
+const path = require('path')
 function deleteLocalFiles(folderPath){
     return new Promise((resolve, reject) =>{
         fs.readdir(folderPath, function(err, files){
@@ -22,7 +24,7 @@ function deleteLocalFiles(folderPath){
                 console.log('All files have been deleted')
                 resolve()
             }).catch(err =>{
-                console.log(`Failes to delete all files in folder ${folderPath}`)
+                console.log(`Failed to delete all files in folder ${folderPath}`)
                 reject(err)
             })
         })

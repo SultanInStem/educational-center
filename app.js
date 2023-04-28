@@ -13,7 +13,9 @@ const HomeworkRouter = require('./Routes/UserRoutes/Homework')
 const CommentRouter = require('./Routes/UserRoutes/Comments')
 const UserRouter = require('./Routes/UserRoutes/User')
 const CoursesRouter = require('./Routes/UserRoutes/Courses')
-const AdminRouter = require('./Routes/AdminRoutes/index')
+const AdminLessonRouter = require('./Routes/AdminRoutes/Lessons')
+const AdminFilesRouter = require('./Routes/AdminRoutes/Files')
+
 
 const cors = require('cors')
 const {NotFound} = require('./Error/NotFound')
@@ -32,7 +34,11 @@ app.use('/api/v1/lessons', authenticate, LessonRouter)
 app.use('/api/v1/lessons/homework', authenticate, HomeworkRouter)
 app.use('/api/v1/lessons/comments', authenticate, CommentRouter)
 app.use('/api/v1/courses', authenticate, CoursesRouter)
-app.use('/api/v1/admin', verifyAdmin, AdminRouter)
+
+
+// admin end points 
+app.use('/api/v1/admin/lessons', verifyAdmin, AdminLessonRouter)
+app.use('/api/v1/admin/lessons/files', verifyAdmin, AdminFilesRouter)
 
 app.use(ErrorHandler)
 app.use(NotFound)

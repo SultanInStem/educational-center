@@ -3,6 +3,7 @@ const User = require('../../../DB/models/User')
 const Lesson = require('../../../DB/models/Lesson')
 const Course = require('../../../DB/models/Course')
 const Homework = require('../../../DB/models/Hw')
+const { NotFound, Forbidden, BadRequest } = require('../../../Error/ErrorSamples')
 const verifyHomework = async(data) => {
     try{
         const answers = joi.object({

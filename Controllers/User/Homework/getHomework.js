@@ -1,5 +1,7 @@
 const Homework = require('../../../DB/models/Hw')
 const Lesson = require('../../../DB/models/Lesson')
+const { NotFound, Forbidden, BadRequest } = require('../../../Error/ErrorSamples')
+const { StatusCodes } = require('http-status-codes')
 const getHomework = async(req, res, next) =>{
     const lessonId = req?.params?.lessonId
     try{

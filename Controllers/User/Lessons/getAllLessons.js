@@ -2,7 +2,7 @@ const { StatusCodes } = require('http-status-codes')
 const { levelsArray } = require('../../../imports')
 const Lesson = require('../../../DB/models/Lesson')
 const joi = require('joi')
-const { NotFound, Forbidden } = require('../../../Error/ErrorSamples')
+const { NotFound, Forbidden, BadRequest } = require('../../../Error/ErrorSamples')
 const getUrl = require('../../../helperFuncs/getUrl')
 const { verifyUserProgress } = require('../../../helperFuncs/verifyUserProgress')
 
@@ -24,7 +24,7 @@ const getAllLessons = async (req, res, next) => {
         const filteredLessons = []
         for(const lesson of lessons){
             let isCompleted = false 
-            if(user.completedCourses.includes(course._id) || user.completedLessosn.includes(lesson._id)){
+            if(user.completedCourses.includes(course._id) || user.completedLessons.includes(lesson._id)){
                 isCompleted = true 
             } 
             const obj = {

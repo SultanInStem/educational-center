@@ -1,13 +1,13 @@
 const {PutObjectCommand, DeleteObjectCommand} = require('@aws-sdk/client-s3')
 const {CreateInvalidationCommand} = require('@aws-sdk/client-cloudfront')
-const { BadRequest } = require('../../Error/ErrorSamples')
+const { BadRequest } = require('../../../Error/ErrorSamples')
 const { deleteLocalFiles } = require('../../../helperFuncs/deleteLocalFiles')
-const isVideo = require('../../helperFuncs/isVideo')
-const isImage = require('../../helperFuncs/isImage')
-const genKey = require('../../helperFuncs/genS3Key')
+const isVideo = require('../../../helperFuncs/isVideo')
+const isImage = require('../../../helperFuncs/isImage')
+const genKey = require('../../../helperFuncs/genS3Key')
 const { StatusCodes } = require('http-status-codes')
-const Lesson = require('../../DB/models/Lesson')
-const Course = require('../../DB/models/Course')
+const Lesson = require('../../../DB/models/Lesson')
+const Course = require('../../../DB/models/Course')
 const mongoose = require('mongoose')
 const path = require('path')
 const joi = require('joi')
@@ -16,55 +16,10 @@ const {
     s3, 
     CloudFront, 
     levelsArray, 
-} = require('../../imports')
-
-
+} = require('../../../imports')
 const uploadsFolderPath = path.join(__dirname, '..', '..', 'uploads')
 
-async function deleteFromS3(key){
-    try{
-        const deleteCommand = new DeleteObjectCommand({
-            Bucket: process.env.AWS_BUCKET_NAME,
-            Key: key
-        })
-        const response = await s3.send(deleteCommand)
-        return response
-    }catch(err){
-        console.log(err)
-        throw err
-    }
-}
-async function invalidateCash(key){
-    try{
-        const invlidationCommand = new CreateInvalidationCommand({
-            DistributionId: process.env.AWS_CLOUD_DISTRIBUTION_ID,
-            InvalidationBatch: {
-                CallerReference: key,
-                Paths: {
-                    Quantity: 1,
-                    Items: [`/${key}`]
-                }
-            }
-        })
-        const response = await CloudFront.send(invlidationCommand)
-        return response 
-    }catch(err){
-        console.log(err)
-        throw err
-    }
-}
-async function deleteCloudFiles(key){
-    try{
-        const res_s3 = await deleteFromS3(key)
-        const res_cloud = await invalidateCash(key)
-        console.log(res_s3)
-        console.log(res_cloud)
-        return true 
-    }catch(err){
-        console.log(err)
-        throw err 
-    }
-}
+const deleteCloudFiles = require('../../../helperFuncs/deleteCloudFiles')
 
 async function verifyInputs(req){
     const jsondataValidation = joi.object({
@@ -152,7 +107,7 @@ const createLessonRuz = async(req, res, next) =>{
                     filename: newFileName,
                     mimetype: temp.mimetype,
                     originalname: temp.originalname,
-                    awsKey: genKey() + newFileName
+                    awsKey: genKey(16) + newFileName
                 })
             }
         }

@@ -7,7 +7,7 @@ const editQuestion = require('../../Controllers/Admin/Homework/editQuestion')
 
 router.post('/homework', uploadQuestion)
 
-router.patch('/homework/:lessonId', changeTimeLimit)
+router.patch('/homework/timeout/:lessonId', changeTimeLimit)
 router.patch('/homework/:id', editQuestion)
 
 router.delete('/homework/:id', deleteQuestion)

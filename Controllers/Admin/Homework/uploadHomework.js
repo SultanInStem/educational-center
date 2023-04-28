@@ -34,18 +34,9 @@ const uploadHomework = async(req, res, next) =>{
             lessonId: lessonId
         })
         const uploadedHomework = await homework.save({session})
-        const projection = {
-            propertyToExclude: 0, 
-            comments: 0,
-            description: 0,
-            title: 0,
-            files: 0,
-            videos: 0,
-            thumbNail: 0
-        }
         const lesson = await Lesson.findByIdAndUpdate(lessonId, {
             $push: {homework: homework._id}
-        }, {session, projection})
+        }, {session, projection: {homework: 1}})
         console.log(lesson)
         if(!lesson) {
             abortTransaction = true

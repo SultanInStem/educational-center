@@ -1,7 +1,8 @@
 const User = require('../../../DB/models/User')
 const Comment = require('../../../DB/models/Comment')
 const Lesson = require('../../../DB/models/Lesson')
-
+const { NotFound, Forbidden, BadRequest } = require('../../../Error/ErrorSamples')
+const { StatusCodes } = require('http-status-codes')
 const deleteComment = async(req, res, next) => {
     const userId = req.userId
     const commentId = req.params?.commentId 
