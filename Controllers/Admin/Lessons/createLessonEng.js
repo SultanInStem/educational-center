@@ -2,7 +2,7 @@ const { PutObjectCommand } = require('@aws-sdk/client-s3')
 const { deleteLocalFiles } = require('../../../helperFuncs/deleteLocalFiles')
 const deleteCloudFiles = require('../../../helperFuncs/deleteCloudFiles')
 const { BadRequest, CustomError }= require('../../../Error/ErrorSamples')
-const {s3, levelsArray} = require('../../../imports')
+const { levelsArray } = require('../../../imports')
 const genKey = require('../../../helperFuncs/genS3Key')
 const isImage = require('../../../helperFuncs/isImage')
 const isVideo = require('../../../helperFuncs/isVideo')
@@ -13,31 +13,8 @@ const mongoose = require('mongoose')
 const path = require('path')
 const joi = require('joi')
 const fs = require('fs')
-
-const BUCKET_NAME = process.env.AWS_BUCKET_NAME  
+const uploadFilesToS3 = require('../../../helperFuncs/uploadFileS3')
 const uploadsFolder = path.join(__dirname, '..', '..', '..', 'uploads')
-
-const uploadFilesToS3 = async (file) =>{
-    console.log('Im on it...')
-    try{
-        if(!file){
-            throw new CustomError("Forgot to pass file to UplodFilesToS3 function")
-        }
-        const readStream = fs.createReadStream(path.join(uploadsFolder, file.originalname))
-        const putCommand = new PutObjectCommand({
-            Bucket: BUCKET_NAME,
-            Key: file.awsKey,
-            Body: readStream,
-            ContentType: file.mimetype,
-            ContentDisposition: "inline"
-        })
-        const response = await s3.send(putCommand)
-        console.log(response)
-        return response
-    }catch(err){
-        throw err 
-    }
-}
 
 const createLessonInEnglish = async(req, res, next) =>{
     const session = await mongoose.startSession()

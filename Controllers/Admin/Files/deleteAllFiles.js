@@ -8,7 +8,7 @@ const deleteAllFiles = async (req, res, next) =>{
     const {lessonId} = req.params 
     try{
         if(!lessonId) throw new BadRequest("Lesson ID must be provided")
-        const lesson = await Lesson.findById(lessonId, {files: 1})
+        const lesson = await Lesson.findById(lessonId, {files: 1}) 
         if(!lesson) throw new NotFound(`Lesson with ID ${lessonId} not found`)
         const files = lesson.files
         for(const file of files){

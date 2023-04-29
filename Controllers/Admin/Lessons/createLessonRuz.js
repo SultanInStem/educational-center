@@ -1,5 +1,3 @@
-const {PutObjectCommand, DeleteObjectCommand} = require('@aws-sdk/client-s3')
-const {CreateInvalidationCommand} = require('@aws-sdk/client-cloudfront')
 const { BadRequest } = require('../../../Error/ErrorSamples')
 const { deleteLocalFiles } = require('../../../helperFuncs/deleteLocalFiles')
 const isVideo = require('../../../helperFuncs/isVideo')
@@ -13,12 +11,10 @@ const path = require('path')
 const joi = require('joi')
 const fs = require('fs')
 const {
-    s3, 
-    CloudFront, 
-    levelsArray, 
+    levelsArray 
 } = require('../../../imports')
 const uploadsFolderPath = path.join(__dirname, '..', '..', 'uploads')
-
+const uploadToS3 = require('../../../helperFuncs/uploadFileS3')
 const deleteCloudFiles = require('../../../helperFuncs/deleteCloudFiles')
 
 async function verifyInputs(req){
@@ -65,29 +61,6 @@ async function verifyInputs(req){
         return {json: value, fileNames: files}
     }catch(err){
         throw err
-    }
-}
-
-async function uploadToS3(file){
-    console.log('Im on it....')
-    try{
-        const readStream = fs.createReadStream(path.join(uploadsFolderPath, file.originalname))
-        readStream.on('error', (err) => {
-            console.log(err)
-            throw err 
-        })
-        const putCommand = new PutObjectCommand({
-            Bucket: process.env.AWS_BUCKET_NAME,
-            Key: file.awsKey,
-            ContentType: file.mimetype,
-            ContentDisposition: 'inline',
-            Body: readStream
-        })
-        const response = await s3.send(putCommand)
-        return response 
-    }catch(err){
-        console.log(err)
-        throw err 
     }
 }
 const createLessonRuz = async(req, res, next) =>{
@@ -140,7 +113,6 @@ const createLessonRuz = async(req, res, next) =>{
         for(const item of modifiedFiles){
             await deleteCloudFiles(item.awsKey)
         }            
-        console.log(err)
         return next(err)
     }finally{
         if(abortTransaction){

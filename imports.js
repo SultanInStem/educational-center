@@ -1,6 +1,7 @@
 const levelsArray = ['beginner', 'elementary', 'pre-intermediate', 'intermediate', 'upper-intermediate', 'ielts']
 const supportedVideoFormatsArray = ['.mov', '.mp4', '.avi']
 const supportedImageFormatsArray = ['.png', '.jpeg', '.jpg']
+const supportedVideoLanguages = ['english', 'russian', 'uzbek']
 const {S3} = require('@aws-sdk/client-s3')
 const { CloudFrontClient } = require('@aws-sdk/client-cloudfront')
 const s3 = new S3({
@@ -24,5 +25,6 @@ module.exports = {
     s3,
     CloudFront,
     supportedImageFormatsArray,
-    supportedVideoFormatsArray
+    supportedVideoFormatsArray,
+    supportedVideoLanguages
 }
