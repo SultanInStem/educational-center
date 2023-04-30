@@ -6,6 +6,8 @@ const port = process.env.PORT || 8080
 const ErrorHandler = require('./Error/ErrorHandler')
 const verifyAdmin = require('./middleware/verifyAdmin')
 const authenticate = require('./middleware/authenticate')
+const fs = require('fs')
+const path = require('path')
 
 const AuthRouter = require('./Routes/UserRoutes/Auth')
 const LessonRouter = require('./Routes/UserRoutes/Lessons')
@@ -45,6 +47,10 @@ app.use(NotFound)
 const start = async() =>{  
     try{
         await connect(process.env.MONGO_URI)
+        const uploadsPath = path.join(__dirname, '.', 'uploads')    
+        if(!fs.existsSync(uploadsPath)){
+            fs.mkdirSync(uploadsPath)
+        }
         app.listen(port, () => console.log('server is up and running'))
     }
     catch(err){
