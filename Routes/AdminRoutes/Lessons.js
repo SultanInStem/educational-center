@@ -43,7 +43,7 @@ const dataScheamaRuz = [
 router.post('/english', upload.fields(dataSchemaEnglish), createLessonEng)
 router.post('/ruz', upload.fields(dataScheamaRuz), createLessonRuz)
 router.delete('/:id', deleteLesson)
-router.get('/single', getLesson)
+router.get('/single', getLesson) 
 
 // EDIT ROUTES
 router.patch('/lesson/edit/picture/:lessonId', upload.single("image"), changeLessonPicture)
@@ -51,6 +51,6 @@ router.patch('/lesson/edit/title/:lessonId', changeLessonTitle)
 router.patch('/lesson/edit/description/:lessonId', changeDescription)
 router.post('/lesson/edit/video/:lessonId', upload.single('video'), addNewVideo)
 router.delete('/lesson/edit/video', deleteVideo)
-router.patch('/lesson/edit/video',)
+router.patch('/lesson/edit/video', upload.single('video'), updateVideo)
 
 module.exports = router
