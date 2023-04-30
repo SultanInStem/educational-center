@@ -1,4 +1,3 @@
-const { PutObjectCommand } = require('@aws-sdk/client-s3')
 const { deleteLocalFiles } = require('../../../helperFuncs/deleteLocalFiles')
 const deleteCloudFiles = require('../../../helperFuncs/deleteCloudFiles')
 const { BadRequest, CustomError }= require('../../../Error/ErrorSamples')
@@ -65,9 +64,7 @@ const createLessonInEnglish = async(req, res, next) =>{
                 throw err; 
             })
         }
-        await session.commitTransaction().catch((reason) => {
-            console.log(reason)
-        })
+        await session.commitTransaction()
         return res.status(StatusCodes.CREATED).json({msg: 'Lesson has been created successfuly', lesson}) 
     }catch(err){ 
         abortTransaction = true 

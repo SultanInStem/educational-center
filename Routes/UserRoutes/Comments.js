@@ -7,7 +7,7 @@ const deleteComment = require('../../Controllers/User/Comments/deleteComment')
 const likeComment = require('../../Controllers/User/Comments/likeComment')
 const disLikeComment = require('../../Controllers/User/Comments/disLikeComment')
 
-router.get('/:lessonId', getAllCommments)
+router.get('/all', getAllCommments)
 router.post('/:lessonId', createComment)  
 router.patch('/like', likeComment)
 router.patch('/dislike', disLikeComment)

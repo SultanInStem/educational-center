@@ -4,9 +4,12 @@ const { supportedVideoLanguages } = require('../../../../imports')
 const { StatusCodes } = require('http-status-codes')
 const { BadRequest, NotFound } = require('../../../../Error/ErrorSamples')
 const isVideo = require('../../../../helperFuncs/isVideo')
-const checkFile = require('../../../../helperFuncs/checkFileExistance')
 const { deleteLocalFiles } = require('../../../../helperFuncs/deleteLocalFiles')
+const uploadToS3 = require('../../../../helperFuncs/uploadFileS3')
 const path = require('path')
+const checkFile = require('../../../../helperFuncs/checkFileExistance')
+const genKey = require('../../../../helperFuncs/genS3Key')
+const deleteCloudFiles = require('../../../../helperFuncs/deleteCloudFiles')
 const uploadsPath = path.join(__dirname, '..', '..', '..', '..', 'uploads')
 
 async function verifyQuery(query){
@@ -16,7 +19,7 @@ async function verifyQuery(query){
             lessonId: joi.string().min(10).required()
         })
         const {error, value} = joiSchema.validate(query)
-        if(error){
+        if(error){ 
             throw error
         }
         const lowerCaseLng = value.language.toLowerCase()
@@ -35,11 +38,25 @@ const updateVideo = async(req, res, next) => {
         isVideo(file.filename)
         const lesson = await Lesson.findById(lessonId, {videos: 1}) 
         if(!lesson) throw new NotFound(`Lesson with ID ${lessonId} not found`)
+        const videos = lesson.videos 
+        const video = videos[language]
+        file.awsKey = genKey(16) + file.originalname // generate S3 key 
+        // upload new file 
+        const uploadedFile = await uploadToS3(file)
+        // delete old file if it exists 
+        const isVideoPresent = await checkFile(video)
+        if(isVideoPresent){ 
+            const deletedFile = await deleteCloudFiles(video)
+        }
+        // update lesson 
+        const updatedLesson = await Lesson.findByIdAndUpdate(lessonId, 
+            {$set: {[`videos.${language}`]: file.awsKey}},
+            {new: true, projection: {videos: 1}})
         return res.status(StatusCodes.OK).json({msg: "Video has been updated"})
     }catch(err){
         return next(err)
     }finally{
         await deleteLocalFiles(uploadsPath)
     }
-}
+} 
 module.exports = updateVideo

@@ -1,7 +1,7 @@
 const express = require('express')
 const router = express.Router()
-const {getCourses} = require('../../Controllers/CommonReqs.js/homeCourses')
+const getAllCourses = require('../../Controllers/User/Courses/getCourses')
 
-router.get('/', getCourses)   
+router.get('/', getAllCourses)
 
 module.exports = router
