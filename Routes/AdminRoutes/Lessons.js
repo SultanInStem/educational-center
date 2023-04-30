@@ -10,6 +10,7 @@ const changeLessonTitle = require('../../Controllers/Admin/Lessons/EditLesson/ch
 const changeDescription = require('../../Controllers/Admin/Lessons/EditLesson/changeDescription')
 const addNewVideo = require('../../Controllers/Admin/Lessons/EditLesson/addVideo')
 const deleteVideo = require('../../Controllers/Admin/Lessons/EditLesson/deleteVideo')
+const updateVideo = require('../../Controllers/Admin/Lessons/EditLesson/updateVideo')
 const path = require('path')
 
 const storage = multer.diskStorage({
@@ -50,5 +51,6 @@ router.patch('/lesson/edit/title/:lessonId', changeLessonTitle)
 router.patch('/lesson/edit/description/:lessonId', changeDescription)
 router.post('/lesson/edit/video/:lessonId', upload.single('video'), addNewVideo)
 router.delete('/lesson/edit/video', deleteVideo)
+router.patch('/lesson/edit/video',)
 
 module.exports = router
