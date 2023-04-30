@@ -4,12 +4,14 @@ const User = require('../../../DB/models/User')
 const getUrl = require('../../../helperFuncs/getUrl')
 const { StatusCodes } = require('http-status-codes')
 const joi = require('joi')
+const { BadRequest } = require('../../../Error/ErrorSamples')
 
 async function verifyQuery(query){
     try{
         const joiSchema = joi.object({
             lessonId: joi.string().required().min(10),
-            n: joi.number().positive().allow(0)
+            lim: joi.number().positive().allow(0),
+            skip: joi.number().positive().allow(0)
         })
         const {error, value} = joiSchema.validate(query)
         if(error){
@@ -22,15 +24,18 @@ async function verifyQuery(query){
 }
 
 const getComments = async (req, res, next) =>{
-    if(req.query.n){
-        req.query.n = Number(req.query.n)
-    }
     try{ 
-        const {lessonId, n} = await verifyQuery(req.query)
+        if(req.query.lim && req.query.skip){
+            req.query.lim = Number(req.query.lim)
+            req.query.skip = Number(req.query.skip)
+        }else{
+            throw BadRequest("Must Provide Valid Query Parameters")
+        }
+        const {lessonId, lim, skip} = await verifyQuery(req.query)
         if(!lessonId) throw new BadRequest("Lesson ID is missing")
         const lesson = await Lesson.findById(lessonId, {comments: 1})
         if(!lesson) throw new NotFound(`Lesson with Id ${lessonId} not found`)
-        const comments = await Comment.find({lessonId: lessonId}).sort({createdAt: 1}).limit(10).skip(n * 10) 
+        const comments = await Comment.find({lessonId: lessonId}).sort({createdAt: 1}).limit(lim).skip(skip) 
         const data = []
         const hashMap = {} 
         for(const comment of comments){
