@@ -5,6 +5,9 @@ const { StatusCodes } = require('http-status-codes')
 const { BadRequest, NotFound } = require('../../../../Error/ErrorSamples')
 const isVideo = require('../../../../helperFuncs/isVideo')
 const checkFile = require('../../../../helperFuncs/checkFileExistance')
+const { deleteLocalFiles } = require('../../../../helperFuncs/deleteLocalFiles')
+const path = require('path')
+const uploadsPath = path.join(__dirname, '..', '..', '..', '..', 'uploads')
 
 async function verifyQuery(query){
     try{
@@ -35,6 +38,8 @@ const updateVideo = async(req, res, next) => {
         return res.status(StatusCodes.OK).json({msg: "Video has been updated"})
     }catch(err){
         return next(err)
+    }finally{
+        await deleteLocalFiles(uploadsPath)
     }
 }
 module.exports = updateVideo

@@ -61,9 +61,13 @@ const createLessonInEnglish = async(req, res, next) =>{
         }
         for(let i = 0; i < modifiedFiles.length; i++){
             const file = modifiedFiles[i]
-            await uploadFilesToS3(file)
+            await uploadFilesToS3(file).catch(err => {
+                throw err; 
+            })
         }
-        await session.commitTransaction()
+        await session.commitTransaction().catch((reason) => {
+            console.log(reason)
+        })
         return res.status(StatusCodes.CREATED).json({msg: 'Lesson has been created successfuly', lesson}) 
     }catch(err){ 
         abortTransaction = true 
@@ -102,7 +106,7 @@ async function verifyInputs(req){
         const files = await new Promise((resolve, reject) => {
             fs.readdir(uploadsFolder, function (err, files) {
               if(err){
-                reject(err); // pass the error to the callback function
+                reject(new BadRequest("Some error")); // pass the error to the callback function
               }
               let imageNumber = 0 
               let videoNumber = 0 
@@ -123,7 +127,6 @@ async function verifyInputs(req){
         });
         return {jsondata: parsedJson} 
     }catch(err){
-        console.log('uploads folder', uploadsFolder)
         await deleteLocalFiles(uploadsFolder)
         throw err
     }
