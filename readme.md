@@ -7,7 +7,7 @@
    # Authorization
    - You need to include JWT token in the HEADERS of every request except for login or register. 
    # User Routes 
-   - GET ALL COURSES, the request type = GET, body = none, returns = { courses, user }__
+   - GET ALL COURSES, the request type = GET, body = none, returns = { courses, user } <br/>
    courses = [
     {
         id: courseId,
