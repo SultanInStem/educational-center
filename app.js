@@ -56,7 +56,6 @@ const start = async() =>{
         if(!fs.existsSync(uploadsPath)){
             fs.mkdirSync(uploadsPath)
         }
-        console.log(await User.collection.getIndexes())
         app.listen(port, () => console.log('server is up and running'))
     }
     catch(err){

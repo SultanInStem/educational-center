@@ -61,6 +61,10 @@ const UserSchema = new mongoose.Schema({
     canComment: {
         type: Boolean,
         default: true
+    },
+    attempsToUpdatePassword: {
+        type: Number,
+        default: 0
     }
 }, {timestamps: true})
 
