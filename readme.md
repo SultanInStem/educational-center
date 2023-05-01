@@ -7,7 +7,7 @@
    # Authorization
    - You need to include JWT token in the HEADERS of every request except for login or register. 
    # User Routes 
-   - GET ALL COURSES, the request type = GET, body = none, returns = { courses, user }, 
+   - GET ALL COURSES, the request type = GET, body = none, returns = { courses, user }__
    courses = [
     {
         id: courseId,
@@ -34,6 +34,6 @@
     currentScore = shows a progress of a user in the given COURSE, it is NOT a general progress. DO NOT CONFUSE WITH progressScore
     - GET ONE LESSON, the request type = GET, body = none, returns {lesson},
     lesson = {
-        
+
     }
  ...
