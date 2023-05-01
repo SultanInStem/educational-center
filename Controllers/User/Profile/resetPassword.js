@@ -22,11 +22,13 @@ async function verifyBody(body){
 
 async function verfiyJWT(token){
     try{
-        jwt.verify(token, process.env.EMAIL_JWT_HASH, (err, decoded) =>{
+        const userId = jwt.verify(token, process.env.EMAIL_JWT_HASH, (err, decoded) =>{
             if(err) throw new BadRequest("Link is not valid")
-            const userId = decoded.userId 
+            const { userId } = decoded
+            console.log(userId)
             return userId 
         })
+        return userId
     }catch(err){
         throw err
     }
@@ -36,11 +38,13 @@ const resetPassword = async (req, res, next) => {
     try{
         const { newPassword } = await verifyBody(req.body)
         const userId = await verfiyJWT(token)
+        console.log(userId)
         // if token and password are valid, generate hash...
         const salt = await bcrypt.genSalt()
         const hashedPassword = await bcrypt.hash(newPassword, salt)
         const user = await User.findByIdAndUpdate(userId, {$set: {password: hashedPassword}}, {projection: {name: 1}})
-        return res.status(StatusCodes.OK).json({msg: 'Password has been reset!'})
+        if(!user) throw new NotFound("User not found")
+        return res.status(StatusCodes.OK).json({msg: 'Password has been reset!', user})
     }catch(err){
         return next(err)
     }

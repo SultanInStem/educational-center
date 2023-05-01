@@ -65,6 +65,10 @@ const UserSchema = new mongoose.Schema({
     attempsToUpdatePassword: {
         type: Number,
         default: 0
+    },
+    isEmailSent: {
+        type: Boolean,
+        default: false
     }
 }, {timestamps: true})
 
