@@ -15,14 +15,14 @@
         coursePicture: url for the course pictrue,
         minScore: min score to access the course,
         isCompleted: true/false shows if a user has completed the course
-    }], 
+    }] <br/>
     user = {
         profilePicture: url for a user avatar,
         progressScore: shows what courses a user can access and what they cannot,
         email,
         name
-    } 
-    - GET ALL LESSONS, the request type = GET, body = none, returns = {lessons, currentScore},
+    } <br/>
+    - GET ALL LESSONS, the request type = GET, body = none, returns = {lessons, currentScore} <br/>
     lessons = [
         {
             lessonId,
@@ -30,8 +30,8 @@
             isCompleted: show if a user already completed the course,
             title
         }
-    ] 
-    currentScore = shows a progress of a user in the given COURSE, it is NOT a general progress. DO NOT CONFUSE WITH progressScore
+    ] <br/> 
+    currentScore = shows a progress of a user in the given COURSE, it is NOT a general progress. DO NOT CONFUSE WITH progressScore <br/>
     - GET ONE LESSON, the request type = GET, body = none, returns {lesson},
     lesson = {
 
