@@ -56,6 +56,7 @@ const start = async() =>{
         if(!fs.existsSync(uploadsPath)){
             fs.mkdirSync(uploadsPath)
         }
+
         app.listen(port, () => console.log('server is up and running'))
     }
     catch(err){
