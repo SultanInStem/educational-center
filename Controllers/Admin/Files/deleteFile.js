@@ -1,5 +1,4 @@
-const deleteFromCloud = require('../../../helperFuncs/invlidateCash')
-const deleteFromS3 = require('../../../helperFuncs/deleteFromS3')
+const deleteCloudFiles = require('../../../helperFuncs/deleteCloudFiles')
 const { NotFound, BadRequest} = require('../../../Error/ErrorSamples')
 const { StatusCodes } = require('http-status-codes')
 const Lesson = require('../../../DB/models/Lesson')
@@ -13,10 +12,8 @@ const deleteFile = async(req, res, next) =>{
         const files = lesson.files 
         for(const file of files){
             if(file.awsKey === fileId){
-                const responseS3 = await deleteFromS3(fileId)
-                const responseCloud = await deleteFromCloud(fileId)
-                console.log(responseS3)
-                console.log(responseCloud)
+                const response = await deleteCloudFiles(fileId)
+                console.log(response)
                 break;
             }
         }

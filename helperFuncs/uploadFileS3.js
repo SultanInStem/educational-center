@@ -8,7 +8,7 @@ const uploadFile = async (file,disposition='inline') =>{
     try{
         console.log('Im on it')
         if(!file) throw new BadRequest("File wasn't provided")
-        const filePath = path.join(__dirname, '..', 'uploads', file.originalname)
+        const filePath = path.join(__dirname, '..', 'uploads', file.filename)
         const readStream = fs.createReadStream(filePath)
         readStream.on("error", (err) => console.log(err))
         const putCommand = new PutObjectCommand({

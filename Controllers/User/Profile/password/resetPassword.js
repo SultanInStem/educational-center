@@ -1,6 +1,7 @@
-const User = require('../../../DB/models/User')
+const User = require('../../../../DB/models/User')
 const { StatusCodes } = require('http-status-codes')
-const { BadRequest, NotFound } = require('../../../Error/ErrorSamples')
+const { BadRequest, NotFound } = require('../../../../Error/ErrorSamples')
+const verifyJWT = require('../verifyEmailJWT')
 const bcrypt = require('bcryptjs')
 const jwt = require('jsonwebtoken')
 const joi = require('joi')
@@ -19,25 +20,10 @@ async function verifyBody(body){
         throw err
     }
 }
-
-
-async function verfiyJWT(token){
-    try{
-        const userId = jwt.verify(token, process.env.EMAIL_JWT_HASH, (err, decoded) =>{
-            if(err) throw new BadRequest("Link is not valid")
-            const { userId } = decoded
-            console.log(userId)
-            return userId 
-        })
-        return userId
-    }catch(err){
-        throw err
-    }
-}
 const resetPassword = async (req, res, next) => {
     try{
         const { newPassword, token } = await verifyBody(req.body)
-        const userId = await verfiyJWT(token)
+        const { userId } = await verifyJWT(token)
         console.log(userId)
         // if token and password are valid, generate hash...
         const salt = await bcrypt.genSalt()

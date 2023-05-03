@@ -27,22 +27,16 @@ const createLessonInEnglish = async(req, res, next) =>{
         for(const item in files){
             if(files[item][0]){
                 const temp = files[item][0]
-                const newFileName = temp.filename.replace(/[\s-]+/g, '') 
-                modifiedFiles.push({
-                    fieldname: temp.fieldname,
-                    filename: newFileName,
-                    mimetype: temp.mimetype,
-                    originalname: temp.originalname,
-                    awsKey: genKey(16) + newFileName
-                })
+                temp.awsKey = genKey(16) + temp.filename 
+                console.log(temp)
+                modifiedFiles.push(temp)
             }
         }
         if(modifiedFiles.length > 2){
-            throw new BadRequest(`There must be only one image and/or video, the number of received files is ${modifiedFiles.length}`)
+            throw new BadRequest(`There must be only one video and/or image, the number of received files is ${modifiedFiles.length}`)
         }
         const lesson = new Lesson(jsondata)
         for(const file of modifiedFiles){
-            console.log(file)
             if(file.fieldname === 'image'){
                 lesson.thumbNail = file.awsKey 
             }else if(file.fieldname === 'video'){
@@ -78,7 +72,7 @@ const createLessonInEnglish = async(req, res, next) =>{
         if(abortTransaction){
             await session.abortTransaction()
         }
-        await deleteLocalFiles(uploadsFolder) // delete all files from local folder 
+        // await deleteLocalFiles(uploadsFolder) // delete all files from local folder 
         await session.endSession()
     }
 }

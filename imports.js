@@ -1,6 +1,7 @@
 const levelsArray = ['beginner', 'elementary', 'pre-intermediate', 'intermediate', 'upper-intermediate', 'ielts']
 const supportedVideoFormatsArray = ['.mov', '.mp4', '.avi']
 const supportedImageFormatsArray = ['.png', '.jpeg', '.jpg']
+const supportedFileExtensions = ['.png', '.jpeg', '.jpg', '.pdf']
 const supportedVideoLanguages = ['english', 'russian', 'uzbek']
 const {S3} = require('@aws-sdk/client-s3')
 const { CloudFrontClient } = require('@aws-sdk/client-cloudfront')
@@ -24,7 +25,9 @@ const CloudFront = new CloudFrontClient({
     },
     region: process.env.AWS_REGION
 })
-
+const senderEmailObject = {
+    email: process.env.EMAIL_API_SENDER
+}
 module.exports = {
     levelsArray,
     s3,
@@ -32,5 +35,7 @@ module.exports = {
     supportedImageFormatsArray,
     supportedVideoFormatsArray,
     supportedVideoLanguages,
-    transEmailsApi
+    transEmailsApi,
+    senderEmailObject,
+    supportedFileExtensions
 }

@@ -1,12 +1,12 @@
 const User = require('../../../DB/models/User')
 const joi = require('joi')
-const {StatusCodes} = require('http-status-codes')
-const {getTime} = require('../../../helperFuncs/getTime')
+const { StatusCodes } = require('http-status-codes')
+const { getTime } = require('../../../helperFuncs/getTime')
 const Course = require('../../../DB/models/Course')
 const jwt = require('jsonwebtoken')
-const {BadRequest, NotFound} = require('../../../Error/ErrorSamples')
-const {levelsArray, transEmailsApi} = require('../../../imports')
-const bcrypt = require('bcryptjs')
+const { BadRequest, NotFound } = require('../../../Error/ErrorSamples')
+const { levelsArray, transEmailsApi, senderEmailObject } = require('../../../imports')
+
 
 async function verifyBody(body){
     try{
@@ -61,13 +61,13 @@ const SignUp = async(req, res, next) =>{
             progressScore: score,
             currentScore: 0, 
             lastActive: lastActive,
-            isEmailSent: true
+            isEmailSent: true,
+            profilePicture: process.env.DEFAULT_PROFILE_PICTURE
         })
-        const senderObject = {email: process.env.EMAIL_API_SENDER}
         const recevier = [{email: user.email}]
         const verificationUrl = await generateVerificationUrl(user._id)
         const emailContents = {
-            sender: senderObject,
+            sender: senderEmailObject,
             to: recevier,   
             subject: "Veriy your email",
             textContent: `Click this link to verify your email: ${verificationUrl}`

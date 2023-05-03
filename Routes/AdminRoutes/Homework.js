@@ -1,4 +1,6 @@
-const router = require('./index')
+const express = require('express')
+const router = express.Router()
+
 const deleteAllQuestions = require('../../Controllers/Admin/Homework/deleteAllQuestions')
 const deleteQuestion = require('../../Controllers/Admin/Homework/deleteQuestion')
 const uploadQuestion = require('../../Controllers/Admin/Homework/uploadHomework')

@@ -19,6 +19,8 @@ const AdminLessonRouter = require('./Routes/AdminRoutes/Lessons')
 const AdminFilesRouter = require('./Routes/AdminRoutes/Files')
 const AdminStatsRouter = require('./Routes/AdminRoutes/Stats')
 const AdminUsersRouter = require('./Routes/AdminRoutes/User')
+const AdminCourseRouter = require('./Routes/AdminRoutes/Courses')
+const AdminImagesRouter = require('./Routes/AdminRoutes/Images')
 
 const cors = require('cors')
 const {NotFound} = require('./Error/NotFound')
@@ -30,20 +32,23 @@ app.use(cors({
 app.get('/', (req,res) => {
     res.send('<h1>Server is live!<h1/>')
 })
- 
-app.use('/api/v1', AuthRouter)
-app.use('/api/v1/user', authenticate, UserRouter)
-app.use('/api/v1/lessons', authenticate, LessonRouter)
-app.use('/api/v1/lessons/homework', authenticate, HomeworkRouter)
-app.use('/api/v1/lessons/comments', authenticate, CommentRouter)
-app.use('/api/v1/courses', authenticate, CoursesRouter)
+const router = express.Router() 
+router.use('/', AuthRouter)
+router.use('/user', authenticate, UserRouter)
+router.use('/lessons', authenticate, LessonRouter)
+router.use('/lessons/homework', authenticate, HomeworkRouter)
+router.use('/lessons/comments', authenticate, CommentRouter)
+router.use('/courses', authenticate, CoursesRouter)
 
 
 // admin end points 
-app.use('/api/v1/admin/lessons', verifyAdmin, AdminLessonRouter)
-app.use('/api/v1/admin/lessons/files', verifyAdmin, AdminFilesRouter)
-app.use('/api/v1/admin/stats', verifyAdmin, AdminStatsRouter)
-app.use('/api/v1/admin/users', verifyAdmin, AdminUsersRouter)
+router.use('/admin/lessons', verifyAdmin, AdminLessonRouter)
+router.use('/admin/lessons/files', verifyAdmin, AdminFilesRouter)
+router.use('/admin/stats', verifyAdmin, AdminStatsRouter)
+router.use('/admin/users', verifyAdmin, AdminUsersRouter)
+router.use('/admin/images', verifyAdmin, AdminImagesRouter)
+
+app.use('/api/v1', router)
 
 app.use(ErrorHandler)
 app.use(NotFound)

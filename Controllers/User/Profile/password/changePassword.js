@@ -1,6 +1,6 @@
 const { StatusCodes } = require('http-status-codes')
-const User = require('../../../DB/models/User')
-const { NotFound, BadRequest, Forbidden } = require('../../../Error/ErrorSamples')
+const User = require('../../../../DB/models/User')
+const { NotFound, BadRequest, Forbidden } = require('../../../../Error/ErrorSamples')
 const bcrypt = require('bcryptjs')
 const joi = require('joi')
 

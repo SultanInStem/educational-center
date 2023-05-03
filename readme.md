@@ -1,4 +1,6 @@
 ### Back-End API For Online School 
+### notes 
+if there is no image, set up some placeholder on the frontend
  ## DESCRIPTION 
  ..... 
 
