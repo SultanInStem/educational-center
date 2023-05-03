@@ -47,12 +47,12 @@ router.use('/admin/lessons/files', verifyAdmin, AdminFilesRouter)
 router.use('/admin/stats', verifyAdmin, AdminStatsRouter)
 router.use('/admin/users', verifyAdmin, AdminUsersRouter)
 router.use('/admin/images', verifyAdmin, AdminImagesRouter)
+router.use('/admin/courses', verifyAdmin, AdminCourseRouter)
 
 app.use('/api/v1', router)
 
 app.use(ErrorHandler)
 app.use(NotFound)
-
 const start = async() =>{  
     try{
         await connect(process.env.MONGO_URI)

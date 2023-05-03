@@ -11,22 +11,7 @@ const changeDescription = require('../../Controllers/Admin/Lessons/EditLesson/ch
 const addNewVideo = require('../../Controllers/Admin/Lessons/EditLesson/addVideo')
 const deleteVideo = require('../../Controllers/Admin/Lessons/EditLesson/deleteVideo')
 const updateVideo = require('../../Controllers/Admin/Lessons/EditLesson/updateVideo')
-const path = require('path')
-
-const storage = multer.diskStorage({
-    destination: function(req, file, cb){
-        const uploadsPath = path.join(__dirname, '..', '..', 'uploads')
-        cb(null, uploadsPath)
-    }, 
-    filename: function(req, file, cb){
-        const fileName = file.originalname.replace(/[\s_]+/g, '')
-        file.originalname = fileName
-        file.filename = fileName
-        cb(null, fileName)
-    }
-})
-
-const upload = multer({storage})
+const { upload } = require('../../imports')
 
 const dataSchemaEnglish = [
     {name: 'video', maxCount: 1},

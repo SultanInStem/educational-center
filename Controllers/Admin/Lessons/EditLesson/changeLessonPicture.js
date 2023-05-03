@@ -5,30 +5,11 @@ const uploadsPath = path.join(__dirname, '..', '..', '..', '..', 'uploads')
 const {NotFound, BadRequest} = require('../../../../Error/ErrorSamples')
 const genKey = require('../../../../helperFuncs/genS3Key')
 const isImage = require('../../../../helperFuncs/isImage')
-const { PutObjectCommand } = require('@aws-sdk/client-s3')
 const Lesson = require('../../../../DB/models/Lesson')
 const { StatusCodes } = require('http-status-codes')
-const { s3 } = require('../../../../imports')
 const fs = require('fs')
 
-
-async function uploadImage(file){
-    try{
-        if(!file) throw new BadRequest("File wasn't provided")
-        const readStream = fs.createReadStream(path.join(uploadsPath, file.originalname))
-        const putCommand = new PutObjectCommand({
-            Bucket: process.env.AWS_BUCKET_NAME,
-            Key: file.awsKey,
-            Body: readStream,
-            ContentType: file.mimetype,
-            ContentDisposition: 'inline'
-        })
-        const response = await s3.send(putCommand)
-        return response 
-    }catch(err){
-        throw err
-    }
-}
+const uploadS3 = require('../../../../helperFuncs/uploadFileS3')
 
 async function verifyFile(file){
     try{
@@ -57,7 +38,7 @@ const changeLessonPicture = async (req, res, next) => {
         const lesson = await Lesson.findById(lessonId, {thumbNail: 1})
         if(!lesson) throw new NotFound(`Lesson with Id ${lessonId} not fou=nd`)
         file.awsKey = genKey(16) + file.originalname
-        const uploadToS3 = await uploadImage(file) // upload new image 
+        const uploadToS3 = await uploadS3(file) 
         oldImageAwsKey = lesson.thumbNail 
         const updatedLesson = await Lesson.findOneAndUpdate({_id: lessonId}, {$set:{thumbNail: file.awsKey}})
         return res.status(StatusCodes.OK).json({msg: 'Lesson Image Has Been Updated'})

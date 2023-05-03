@@ -6,11 +6,9 @@ const { BadRequest, NotFound } = require('../../../../Error/ErrorSamples')
 const isVideo = require('../../../../helperFuncs/isVideo')
 const { deleteLocalFiles } = require('../../../../helperFuncs/deleteLocalFiles')
 const uploadToS3 = require('../../../../helperFuncs/uploadFileS3')
-const path = require('path')
 const checkFile = require('../../../../helperFuncs/checkFileExistance')
 const genKey = require('../../../../helperFuncs/genS3Key')
 const deleteCloudFiles = require('../../../../helperFuncs/deleteCloudFiles')
-const uploadsPath = path.join(__dirname, '..', '..', '..', '..', 'uploads')
 
 async function verifyQuery(query){
     try{

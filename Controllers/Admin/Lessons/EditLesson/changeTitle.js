@@ -12,7 +12,7 @@ const verifyBody = async (data) => {
         if(error){
             throw error
         }
-        return value.title
+        return value
     }catch(err){
         throw err
     }
@@ -22,7 +22,7 @@ const changeTitle = async (req, res, next) =>{
     console.log(lessonId)
     try{
         if(lessonId.length < 10) throw new BadRequest("Valid Lesson ID must be provided")
-        const title = await verifyBody(req.body)
+        const { title } = await verifyBody(req.body)
         const lesson = await Lesson.findByIdAndUpdate(lessonId, {$set: {title: title}}, {projection: {title:1}})
         if(!lesson) throw new NotFound(`Lesson with ID ${lessonId} not found`)
         return res.status(StatusCodes.OK).json({msg: 'Lesson has been updated', title})
