@@ -6,7 +6,8 @@ const DefaultSchema = new mongoose.Schema({
     },
     role: {
         type: String,
-        reuqired: true
+        reuqired: true,
+        unique: true
     }
 })
 

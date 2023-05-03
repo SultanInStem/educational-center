@@ -49,7 +49,7 @@ const addNewVideo = async (req, res, next) => {
     }catch(err){
         return next(err)
     }finally{
-        await deleteLocalFiles(uploadsPath)
+        await deleteLocalFiles()
     }
 }
 module.exports = addNewVideo

@@ -53,7 +53,6 @@ app.use('/api/v1', router)
 app.use(ErrorHandler)
 app.use(NotFound)
 
-const User = require('./DB/models/User')
 const start = async() =>{  
     try{
         await connect(process.env.MONGO_URI)
@@ -61,7 +60,6 @@ const start = async() =>{
         if(!fs.existsSync(uploadsPath)){
             fs.mkdirSync(uploadsPath)
         }
-
         app.listen(port, () => console.log('server is up and running'))
     }
     catch(err){

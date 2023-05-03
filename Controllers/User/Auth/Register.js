@@ -5,6 +5,7 @@ const { getTime } = require('../../../helperFuncs/getTime')
 const Course = require('../../../DB/models/Course')
 const jwt = require('jsonwebtoken')
 const { BadRequest, NotFound } = require('../../../Error/ErrorSamples')
+const DefaultImage = require('../../../DB/models/DefaultImage')
 const { levelsArray, transEmailsApi, senderEmailObject } = require('../../../imports')
 
 
@@ -51,6 +52,7 @@ const SignUp = async(req, res, next) =>{
             throw new NotFound("Course Not Found")
         }
         const lastActive = getTime()
+        const profilePic = await DefaultImage.findOne({role: 'profile'})
         const user = new User({
             name, 
             email, 
@@ -62,7 +64,7 @@ const SignUp = async(req, res, next) =>{
             currentScore: 0, 
             lastActive: lastActive,
             isEmailSent: true,
-            profilePicture: process.env.DEFAULT_PROFILE_PICTURE
+            profilePicture: profilePic.awsKey
         })
         const recevier = [{email: user.email}]
         const verificationUrl = await generateVerificationUrl(user._id)

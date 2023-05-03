@@ -1,6 +1,7 @@
 const fs = require('fs')
 const path = require('path')
-function deleteLocalFiles(folderPath){
+const folderPath = path.join(__dirname, '..', 'uploads')
+function deleteLocalFiles(){
     return new Promise((resolve, reject) =>{
         fs.readdir(folderPath, function(err, files){
             if(err){

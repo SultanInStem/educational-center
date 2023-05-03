@@ -13,7 +13,7 @@ async function verifyQuery(data){
         })
         const {error, value} = joiSchema.validate(data)
         if(error) throw error
-        const lowerCase = value.language.toLowerCase()
+        const lowerCase = value.language.toLowerCase() 
         value.language = lowerCase
         return value 
     }catch(err){

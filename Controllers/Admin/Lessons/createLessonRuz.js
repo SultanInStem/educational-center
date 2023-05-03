@@ -14,6 +14,7 @@ const {
     levelsArray 
 } = require('../../../imports')
 const uploadsFolderPath = path.join(__dirname, '..', '..', 'uploads')
+const DefaultImage = require('../../../DB/models/DefaultImage')
 const uploadToS3 = require('../../../helperFuncs/uploadFileS3')
 const deleteCloudFiles = require('../../../helperFuncs/deleteCloudFiles')
 
@@ -98,6 +99,10 @@ const createLessonRuz = async(req, res, next) =>{
             const response = await uploadToS3(item)
             console.log(response)
         }
+        if(lesson.thumbNail.length < 1){
+            const defaultImage = await DefaultImage.findOne({role: 'lesson'})
+            lesson.thumbNail = defaultImage.awsKey 
+        }
         await lesson.save({session})
         const course = await Course.findOneAndUpdate({name: json.course}, { 
             $push: {lessons: lesson._id}
@@ -118,7 +123,7 @@ const createLessonRuz = async(req, res, next) =>{
         if(abortTransaction){
             await session.abortTransaction()
         }
-        await deleteLocalFiles(uploadsFolderPath)
+        await deleteLocalFiles()
         await session.endSession()
     }
 }

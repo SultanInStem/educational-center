@@ -67,7 +67,7 @@ const changeLessonPicture = async (req, res, next) => {
         if(oldImageAwsKey){
             await deleteCloudFiles(oldImageAwsKey)
         }
-        await deleteLocalFiles(uploadsPath)
+        await deleteLocalFiles()
     }
 }
 

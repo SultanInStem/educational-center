@@ -3,6 +3,7 @@ const router = express.Router()
 const uploadAvatar = require('../../Controllers/Admin/Images/uploadAvatar')
 const getAvatars = require('../../Controllers/Admin/Images/getAvatars')
 const deleteAvatar = require('../../Controllers/Admin/Images/deleteAvatar')
+const updateDefaultImage = require('../../Controllers/Admin/Images/defaultImages')
 const path = require('path')
 const multer = require('multer')
 const uploadsPath = path.join(__dirname, '..', '..', 'uploads')
@@ -23,5 +24,6 @@ router.post('/avatars', upload.single('image'), uploadAvatar)
 router.get('/avatars', getAvatars)
 router.delete('/avatars/:imageId', deleteAvatar)
 
+router.patch('/update/default/image', upload.single('image'), updateDefaultImage)
 
 module.exports = router 

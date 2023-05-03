@@ -1,6 +1,6 @@
 const { deleteLocalFiles } = require('../../../helperFuncs/deleteLocalFiles')
 const deleteCloudFiles = require('../../../helperFuncs/deleteCloudFiles')
-const { BadRequest, CustomError }= require('../../../Error/ErrorSamples')
+const { BadRequest }= require('../../../Error/ErrorSamples')
 const { levelsArray } = require('../../../imports')
 const genKey = require('../../../helperFuncs/genS3Key')
 const isImage = require('../../../helperFuncs/isImage')
@@ -14,6 +14,7 @@ const joi = require('joi')
 const fs = require('fs')
 const uploadFilesToS3 = require('../../../helperFuncs/uploadFileS3')
 const uploadsFolder = path.join(__dirname, '..', '..', '..', 'uploads')
+const DefaultImage = require('../../../DB/models/DefaultImage')
 
 const createLessonInEnglish = async(req, res, next) =>{
     const session = await mongoose.startSession()
@@ -42,6 +43,10 @@ const createLessonInEnglish = async(req, res, next) =>{
             }else if(file.fieldname === 'video'){
                 lesson.videos.english = file.awsKey
             }
+        }
+        if(lesson.thumbNail.length < 1){
+            const defaultImage = await DefaultImage.findOne({role: 'lesson'})
+            lesson.thumbNail = defaultImage.awsKey 
         }
         const course = await Course.findOneAndUpdate(
             {name: lesson.course},
@@ -72,7 +77,7 @@ const createLessonInEnglish = async(req, res, next) =>{
         if(abortTransaction){
             await session.abortTransaction()
         }
-        // await deleteLocalFiles(uploadsFolder) // delete all files from local folder 
+        await deleteLocalFiles() // delete all files from local folder 
         await session.endSession()
     }
 }
@@ -118,7 +123,7 @@ async function verifyInputs(req){
         });
         return {jsondata: parsedJson} 
     }catch(err){
-        await deleteLocalFiles(uploadsFolder)
+        await deleteLocalFiles()
         throw err
     }
 }

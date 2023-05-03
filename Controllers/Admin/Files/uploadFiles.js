@@ -75,7 +75,7 @@ const uploadLessonFiles = async (req, res, next)=>{
         }
         return next(err)
     }finally{
-        await deleteLocalFiles(folderPath) 
+        await deleteLocalFiles() 
     }
 }
 
