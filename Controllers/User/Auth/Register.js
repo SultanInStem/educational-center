@@ -51,6 +51,8 @@ const SignUp = async(req, res, next) =>{
         }else if(!courseObj){
             throw new NotFound("Course Not Found")
         }
+        const isUserRegistered = await User.count({email: email})
+        if(isUserRegistered >= 1) throw new BadRequest(`User with this email already exists`)
         const lastActive = getTime()
         const profilePic = await DefaultImage.findOne({role: 'profile'})
         const user = new User({

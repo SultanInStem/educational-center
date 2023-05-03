@@ -1,6 +1,6 @@
 const User = require('../DB/models/User')
 const Course = require('../DB/models/Course')
-
+const { NotFound, Forbidden } = require('../Error/ErrorSamples')
 async function verifyUserProgress(userId, courseName){
     try{
         const user = await User.findById(userId, {
