@@ -4,10 +4,11 @@ const joi = require('joi')
 const { NotFound } = require('../../../Error/ErrorSamples')
 const { StatusCodes } = require('http-status-codes')
 
+
 async function verifyBody(body){
     try{
         const joiSchema = joi.object({
-            imageKey: joi.string().min(14).required()
+            imageKey: joi.string().min(14).required() 
         })
         const {error, value} = joiSchema.validate(body)
         if(error) throw error 
@@ -20,7 +21,7 @@ async function verifyBody(body){
 const setProfilePicture = async(req,res, next) => {
     const userId = req.userId
     try{
-        const { imageKey } = await verifyBody(req.body)
+        const { imageKey, id } = await verifyBody(req.body)
         const isImagePresent = await checkFile(imageKey)
         if(!isImagePresent) throw new NotFound("This image does not exist, please choose another one")
         const user = await User.findByIdAndUpdate(userId, 

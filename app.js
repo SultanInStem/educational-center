@@ -22,7 +22,7 @@ const AdminUsersRouter = require('./Routes/AdminRoutes/User')
 const AdminCourseRouter = require('./Routes/AdminRoutes/Courses')
 const AdminImagesRouter = require('./Routes/AdminRoutes/Images')
 const AdminHomeworkRouter = require('./Routes/AdminRoutes/Homework')
-
+const AdminCommentRouter = require('./Routes/AdminRoutes/Comments')
 
 const cors = require('cors')
 const {NotFound} = require('./Error/NotFound')
@@ -51,6 +51,7 @@ router.use('/admin/users', verifyAdmin, AdminUsersRouter)
 router.use('/admin/images', verifyAdmin, AdminImagesRouter)
 router.use('/admin/courses', verifyAdmin, AdminCourseRouter)
 router.use('/admin/homework', verifyAdmin, AdminHomeworkRouter)
+router.use('/admin/comments', verifyAdmin, AdminCommentRouter)
 app.use('/api/v1', router)
 
 app.use(ErrorHandler)

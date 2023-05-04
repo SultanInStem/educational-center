@@ -50,6 +50,9 @@ const getComments = async (req, res, next) =>{
             }
             if(!hashMap[comment.createdBy]){
                 const user = await User.findById(comment.createdBy, {profilePicture: 1, name: 1, email: 1})
+                if(!user){
+                    continue 
+                }
                 const tempUser = { 
                     profilePicture: getUrl(user.profilePicture),
                     name: user.name,

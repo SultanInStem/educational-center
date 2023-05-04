@@ -3,6 +3,6 @@ const router = express.Router()
 const deleteAllComments = require('../../Controllers/Admin/Comments/deleteComments')
 
 
-router.delete('/comments/:lessonId', deleteAllComments)
+router.delete('/:lessonId', deleteAllComments)
 
 module.exports = router

@@ -1,5 +1,7 @@
 const Lesson = require('../../../DB/models/Lesson')
 const Comment = require('../../../DB/models/Comment')
+const { StatusCodes } = require('http-status-codes')
+const { BadRequest, NotFound } = require('../../../Error/ErrorSamples')
 const deleteAllComments = async (req, res, next) =>{
     const {lessonId} = req.params 
     try{
