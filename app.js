@@ -21,6 +21,8 @@ const AdminStatsRouter = require('./Routes/AdminRoutes/Stats')
 const AdminUsersRouter = require('./Routes/AdminRoutes/User')
 const AdminCourseRouter = require('./Routes/AdminRoutes/Courses')
 const AdminImagesRouter = require('./Routes/AdminRoutes/Images')
+const AdminHomeworkRouter = require('./Routes/AdminRoutes/Homework')
+
 
 const cors = require('cors')
 const {NotFound} = require('./Error/NotFound')
@@ -48,11 +50,12 @@ router.use('/admin/stats', verifyAdmin, AdminStatsRouter)
 router.use('/admin/users', verifyAdmin, AdminUsersRouter)
 router.use('/admin/images', verifyAdmin, AdminImagesRouter)
 router.use('/admin/courses', verifyAdmin, AdminCourseRouter)
-
+router.use('/admin/homework', verifyAdmin, AdminHomeworkRouter)
 app.use('/api/v1', router)
 
 app.use(ErrorHandler)
 app.use(NotFound)
+
 const start = async() =>{  
     try{
         await connect(process.env.MONGO_URI)
@@ -60,6 +63,7 @@ const start = async() =>{
         if(!fs.existsSync(uploadsPath)){
             fs.mkdirSync(uploadsPath)
         }
+
         app.listen(port, () => console.log('server is up and running'))
     }
     catch(err){

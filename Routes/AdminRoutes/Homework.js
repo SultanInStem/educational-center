@@ -7,10 +7,12 @@ const uploadQuestion = require('../../Controllers/Admin/Homework/uploadHomework'
 const changeTimeLimit = require('../../Controllers/Admin/Homework/changeTimeOut')
 const editQuestion = require('../../Controllers/Admin/Homework/editQuestion')
 
-router.post('/homework', uploadQuestion)
+router.post('/', uploadQuestion)
 
-router.patch('/homework/timeout/:lessonId', changeTimeLimit)
-router.patch('/homework/:id', editQuestion)
+router.patch('/timeout/:lessonId', changeTimeLimit)
+router.patch('/:id', editQuestion)
 
-router.delete('/homework/:id', deleteQuestion)
-router.delete('/homework/:lessonId', deleteAllQuestions)
+router.delete('/:id', deleteQuestion)
+router.delete('/:lessonId', deleteAllQuestions)
+
+module.exports = router

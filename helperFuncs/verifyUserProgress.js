@@ -6,7 +6,8 @@ async function verifyUserProgress(userId, courseName){
         const user = await User.findById(userId, {
             profilePicture: 1,
             progressScore: 1,
-            completedLessons: 1,
+            allCompletedLessons: 1,
+            completedCourseLessons: 1,
             completedCourses: 1,
             currentScore: 1,
             isAdmin: 1,

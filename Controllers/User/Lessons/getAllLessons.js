@@ -24,7 +24,7 @@ const getAllLessons = async (req, res, next) => {
         const filteredLessons = []
         for(const lesson of lessons){
             let isCompleted = false 
-            if(user.completedCourses.includes(course._id) || user.completedLessons.includes(lesson._id)){
+            if(user.completedCourses.includes(course._id) || user.allCompletedLessons.includes(lesson._id)){
                 isCompleted = true 
             } 
             const obj = {

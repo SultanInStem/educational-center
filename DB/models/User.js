@@ -39,10 +39,14 @@ const UserSchema = new mongoose.Schema({
         type: Boolean,
         default: true
     },
-    completedLessons: {
+    allCompletedLessons: {
         type: Array,
         default: []
     }, 
+    completedCourseLessons: {
+        type: Array,
+        default: []
+    },
     completedCourses:{
         type: Array,
         default: []
