@@ -1,7 +1,8 @@
 const mongoose = require('mongoose')
 const Homework = require('../../../DB/models/Hw')
 const Lesson = require('../../../DB/models/Lesson')
-
+const { BadRequest, NotFound } = require('../../../Error/ErrorSamples')
+const { StatusCodes } = require('http-status-codes')
 const deleteQuestion = async(req, res, next) => {
     const homeworkId = req.params.id 
     const session = await mongoose.startSession()

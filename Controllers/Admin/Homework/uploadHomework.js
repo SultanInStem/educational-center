@@ -4,17 +4,19 @@ const Homework = require('../../../DB/models/Hw')
 const joi = require('joi')
 const { NotFound, BadRequest } = require('../../../Error/ErrorSamples')
 const { StatusCodes } = require('http-status-codes')
-function verifyInput(data){
+function verifyHomeworkBody(data){
     try{
         const validationSchema = joi.object({
-            question: joi.string().min(1),
-            options: joi.array().items(joi.string()).min(2),
-            correctAnswer: joi.string().min(1),
-            lessonId: joi.string().min(6)
+            question: joi.string().required(),
+            correctAnswer: joi.string().required(),
+            options: joi.array().items(joi.string()).required().min(2),
+            lessonId: joi.string().min(10)
         })
         const {error, value} = validationSchema.validate(data)
         if(error){
             throw error
+        }else if(!value.options.includes(value.correctAnswer)){
+            throw new BadRequest("Options must include correct answer")
         }
         return value 
     }catch(err){
@@ -27,7 +29,7 @@ const uploadHomework = async(req, res, next) =>{
     const session = await mongoose.startSession()
     session.startTransaction()
     try{
-        const {question, options, lessonId, correctAnswer} = await verifyInput(req.body)
+        const {question, options, lessonId, correctAnswer} = await verifyHomeworkBody(req.body)
         const homework = new Homework({
             question: question,
             options: options,
@@ -59,4 +61,4 @@ const uploadHomework = async(req, res, next) =>{
         await session.endSession()
     }
 }
-module.exports = uploadHomework
+module.exports = {uploadHomework, verifyHomeworkBody}
