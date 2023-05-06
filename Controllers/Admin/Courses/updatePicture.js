@@ -8,6 +8,7 @@ const genKey = require('../../../helperFuncs/genS3Key')
 const { StatusCodes } = require('http-status-codes')
 const deleteCloudFiles = require('../../../helperFuncs/deleteCloudFiles')
 const { deleteLocalFiles } = require('../../../helperFuncs/deleteLocalFiles')
+
 async function verifyBody(body){
     try{
         const joiSchema = joi.object({
@@ -29,7 +30,7 @@ const updateCoursePicture = async (req, res, next) =>{
         const file = req.file
         const { course } = await verifyBody(req.body)
         if(!file) throw new BadRequest('File is missing')
-        const isValidImage = isImage(file)
+        const isValidImage = isImage(file.filename)
         if(!isValidImage) throw new BadRequest("File provided is not a valid image")
         const awsKey = genKey(16) + file.filename 
         file.awsKey = awsKey
@@ -38,8 +39,11 @@ const updateCoursePicture = async (req, res, next) =>{
         const courseobj = await Course.findOneAndUpdate(
             {name: course}, 
             {$set: {coursePicture: awsKey}}, 
-            {new: true, projection: {lessons: 0}})
+            {new: false, projection: {lessons: 0}})
         if(!courseobj) throw new NotFound("Course not found")
+        if(courseobj.coursePicture){
+            await deleteCloudFiles(courseobj.coursePicture)
+        }
         return res.status(StatusCodes.OK).json({msg: 'course image has been changed'})
     }catch(err){
         if(aws_image_key.length > 1){

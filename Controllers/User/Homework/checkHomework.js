@@ -41,7 +41,7 @@ async function completeLesson(user, lesson, course){
                 $push: {completedCourseLessons: lessonId, allCompletedLessons: lessonId}
             }
             const updatedUSer = await User.findByIdAndUpdate(userId, update, {new: true})
-            return { msg: "Congrats, you completed the lesson", updatedUSer }
+            return { msg: "Congrats, you completed the lesson!", updatedUSer }
         }else if(currentScore >= 1 && user.progressScore + 1 !== 6){
             const nextCourse = await Course.findOne({minScore: course.minScore + 1})
             const updatedUser = await User.findByIdAndUpdate(userId, 
@@ -50,14 +50,14 @@ async function completeLesson(user, lesson, course){
                     $set: { course: nextCourse.name, currentScore: 0, completedCourseLessons: [] },
                     $push: { completedCourses: course._id } 
                 }, {new: true})
-            return { msg: "Congrats, you completed the course", updatedUser }
+            return { msg: `Congrats, you completed the ${course.name} course!`, updatedUser }
         }else if(currentScore >= 1 && user.progressScore + 1 === 6){
             const updatedUser = await User.findByIdAndUpdate(userId, 
                 {
                     $inc: { progressScore: 1 },
                     $push: { completedCourses: course._id }
                 }, {new: true})
-            return { msg: "Congrats, you completed final course", updatedUser }
+            return { msg: "Congrats, you completed the final course!", updatedUser }
         }
     }catch(err){
         throw err
@@ -95,10 +95,10 @@ const checkHomework = async(req, res, next) =>{
         if(!lessonId) throw new BadRequest("Lesson ID is necessary for the request")
         const receivedHomework = await verifyHomework(data)
         const lesson = await Lesson.findById(lessonId, { homework: 1, course: 1 })
+        if(!lesson) throw new NotFound(`Lesson with Id ${lessonId} not found`)
         const user = await User.findById(userId, { completedCourseLessons: 1, completedCourses: 1, progressScore: 1, allCompletedLessons: 1 })
         const course = await Course.findOne({ name: lesson.course })
         if(!user) throw new NotFound("User Not Found")
-        else if(!lesson) throw new NotFound(`Lesson with Id ${lessonId} not found`)
         else if(!course) throw new NotFound("Course not found")
 
         if(receivedHomework.length < lesson.homework.length){

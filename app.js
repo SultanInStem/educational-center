@@ -8,6 +8,7 @@ const verifyAdmin = require('./middleware/verifyAdmin')
 const authenticate = require('./middleware/authenticate')
 const fs = require('fs')
 const path = require('path')
+const helmet = require('helmet')
 
 const AuthRouter = require('./Routes/UserRoutes/Auth')
 const LessonRouter = require('./Routes/UserRoutes/Lessons')
@@ -30,6 +31,7 @@ app.use(express.json())
 app.use(cors({
     origin: '*'
 }))
+app.use(helmet())
 
 app.get('/', (req,res) => {
     res.send('<h1>Server is live!<h1/>')
@@ -57,6 +59,7 @@ app.use('/api/v1', router)
 app.use(ErrorHandler)
 app.use(NotFound)
 
+
 const start = async() =>{  
     try{
         await connect(process.env.MONGO_URI)
@@ -64,11 +67,10 @@ const start = async() =>{
         if(!fs.existsSync(uploadsPath)){
             fs.mkdirSync(uploadsPath)
         }
-
         app.listen(port, () => console.log('server is up and running'))
     }
     catch(err){
         console.log(err)
     }
 }
-start()
+start() 

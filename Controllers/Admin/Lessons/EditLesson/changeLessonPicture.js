@@ -36,7 +36,7 @@ const changeLessonPicture = async (req, res, next) => {
         if(!lessonId) throw new BadRequest("Lesson ID must be provided")
         verifyFile(file)
         const lesson = await Lesson.findById(lessonId, {thumbNail: 1})
-        if(!lesson) throw new NotFound(`Lesson with Id ${lessonId} not fou=nd`)
+        if(!lesson) throw new NotFound(`Lesson with Id ${lessonId} not found`)
         file.awsKey = genKey(16) + file.originalname
         const uploadToS3 = await uploadS3(file) 
         oldImageAwsKey = lesson.thumbNail 
@@ -49,7 +49,7 @@ const changeLessonPicture = async (req, res, next) => {
             await deleteCloudFiles(oldImageAwsKey)
         }
         await deleteLocalFiles()
-    }
+    } 
 }
 
 module.exports = changeLessonPicture

@@ -3,8 +3,6 @@ const {S3} = require('@aws-sdk/client-s3')
 const { CloudFrontClient } = require('@aws-sdk/client-cloudfront')
 const multer = require('multer')
 const Sib = require('sib-api-v3-sdk')
-
-
 const levelsArray = ['beginner', 'elementary', 'pre-intermediate', 'intermediate', 'upper-intermediate', 'ielts']
 const supportedVideoFormatsArray = ['.mov', '.mp4', '.avi']
 const supportedImageFormatsArray = ['.png', '.jpeg', '.jpg']

@@ -1,4 +1,4 @@
-const { BadRequest, Unauthorized, NotFound } = require('../../../Error/ErrorSamples')
+const { NotFound } = require('../../../Error/ErrorSamples')
 const { verifyUserProgress } = require('../../../helperFuncs/verifyUserProgress')
 const getUrl = require('../../../helperFuncs/getUrl')
 const { StatusCodes } = require('http-status-codes')
@@ -6,31 +6,31 @@ const Lesson = require('../../../DB/models/Lesson')
 const { levelsArray } = require('../../../imports')
 const joi = require('joi')
 
-const joiValidation = (course) =>{
+async function verifyQuery(query){
     try{
-        const schema = joi.object({
+        const joiSchema = joi.object({
+            lessonId: joi.string().min(10).required(),
             course: joi.string().valid(...levelsArray).insensitive()
         })
-        const {error, value} = schema.validate({course})
-        if(error){
-            throw new BadRequest("Invalid input")
-        }
-        return true
+        const {error, value} = joiSchema.validate(query)
+        if(error) throw error
+        value.courseName = value.course.toUpperCase()
+        return value 
     }catch(err){
-        throw err
+        throw err 
     }
 }
+
+
 const getLesson = async(req, res, next) =>{
     const userId = req.userId 
-    const {lessonId, course} = req.query
-    const courseNameUpper = course.toUpperCase()
+
     try{
-        if(!lessonId) throw new BadRequest("Lesson ID is missing")
-        joiValidation(courseNameUpper) // checks the provided course 
-        const {user, course} = await verifyUserProgress(userId, courseNameUpper)
+        const {lessonId, courseName} = await verifyQuery(req.query)
+        const { user, course } = await verifyUserProgress(userId, courseName)
         const lesson = await Lesson.findOne(
-            {_id: lessonId, course: courseNameUpper}, 
-            {proptertyToExclude: 0, comments: 0, homework: 0})
+            {_id: lessonId, course: courseName}, 
+            {comments: 0, homework: 0})
         if(!lesson) throw new NotFound("Lesson Not Found")
         const videos = lesson.videos
         const files = lesson.files
@@ -45,7 +45,7 @@ const getLesson = async(req, res, next) =>{
                 files[i] = getUrl(file.awsKey)
             }
         }
-        lesson.thumbNail = getUrl(lesson.thumbNail) // url for the thumbNail
+        lesson.thumbNail = getUrl(lesson.thumbNail) 
         const tempLesson = {
             lessonId,
             files,
@@ -53,11 +53,10 @@ const getLesson = async(req, res, next) =>{
             lessonPicture: lesson.thumbNail,
             title: lesson.title,
             description: lesson.description,
-            course: courseNameUpper
+            course: courseName
         }
         return res.status(StatusCodes.OK).json({lesson: tempLesson})
     }catch(err){
-        console.log(err)
         return next(err)
     }
 }

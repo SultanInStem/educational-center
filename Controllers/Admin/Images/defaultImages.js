@@ -34,7 +34,6 @@ const updateDefaultImage = async(req, res, next) => {
         const awsKey = genKey(16) + file.filename 
         file.awsKey = awsKey
         const response = await uploadS3(file)
-        console.log(response)
         const deletedFile = await deleteCloudFiles(defaultImage.awsKey)
         const updatedImage = await DefaultImage.findOneAndUpdate({role: type}, {$set: {awsKey: awsKey}})
         return res.status(StatusCodes.OK).json({msg: `Default image for ${type} has been updated`})

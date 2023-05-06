@@ -1,6 +1,6 @@
 const Avatar = require('../../../DB/models/Avatar')
 const deleteCloudFiles = require('../../../helperFuncs/deleteCloudFiles')
-const { BadRequest } = require('../../../Error/ErrorSamples')
+const { BadRequest, NotFound } = require('../../../Error/ErrorSamples')
 const { StatusCodes } = require('http-status-codes')
 
 const deleteAvatar = async(req, res, next) => {
@@ -8,6 +8,7 @@ const deleteAvatar = async(req, res, next) => {
     try{
         if(imageId.length < 10) throw new BadRequest("Provide valid image ID")
         const deletedImage = await Avatar.findByIdAndDelete(imageId)
+        if(!deletedImage) throw new NotFound(`Avatar with Id ${imageId} not found`)
         const deletedImageS3 = await deleteCloudFiles(deletedImage.awsKey)
         return res.status(StatusCodes.OK).json({msg: 'Image has been deleted'})
     }catch(err){

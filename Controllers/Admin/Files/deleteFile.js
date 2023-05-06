@@ -5,6 +5,7 @@ const Lesson = require('../../../DB/models/Lesson')
 
 const deleteFile = async(req, res, next) =>{
     const {fileId, lessonId} = req.query
+    console.log('HELLO WORLD')
     try{
         if(!fileId || !lessonId) throw new BadRequest("File id and Lesson Id must be provided") 
         const lesson = await Lesson.findById(lessonId, {files: 1})

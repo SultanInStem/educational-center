@@ -6,16 +6,25 @@ const { NotFound, Forbidden, BadRequest } = require('../../../Error/ErrorSamples
 const getUrl = require('../../../helperFuncs/getUrl')
 const { verifyUserProgress } = require('../../../helperFuncs/verifyUserProgress')
 
-const getAllLessons = async (req, res, next) => {
-    const ValidationSchema = joi.object({
-        course: joi.string().valid(...levelsArray).insensitive()
-    })
-    const {error, value} = ValidationSchema.validate(req.params)
-    if(error) return next(error)
-    const userId = req.userId
-    const courseName = value.course.toUpperCase()
+async function verifyParams(params){
     try{
-        const {user, course} = await verifyUserProgress(userId, courseName)
+        const joiSchema = joi.object({
+            course: joi.string().valid(...levelsArray).insensitive()
+        })
+        const {error, value} = joiSchema.validate(params)
+        if(error) throw error 
+        value.courseName = value.course.toUpperCase()
+        return value
+    }catch(err){
+        throw err 
+    }
+}
+
+const getAllLessons = async (req, res, next) => {
+    const userId = req.userId
+    const { courseName } = await verifyParams(req.params)
+    try{
+        const { user, course } = await verifyUserProgress(userId, courseName)
         const lessons = await Lesson.find({course: course.name}, {
             title: 1,
             thumbNail: 1,
