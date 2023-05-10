@@ -27,7 +27,6 @@ const sendVerificicationEmail = async (req, res, next) =>{
         const user = await User.findByIdAndUpdate(userId, {$set: {isEmailSent: true}})
         
         if(!user) throw new NotFound("user not found")
-        // else if(user.isEmailSent) throw new BadRequest("Email has already been sent!")
         const receiver = [{email: newEmail}]
         const verificationUrl = await makeEmailURL(process.env.NEW_EMAIL_VERIFICATION_CLIENT_DOMAIN, {userId, newEmail})
         const emailContents = {
