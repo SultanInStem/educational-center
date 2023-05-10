@@ -26,21 +26,21 @@ const deleteLesson = async (req, res, next) =>{
             throw new NotFound("Course Not Found")
         }
         const tempFiles = []
-        Object.entries(videos).forEach(item => {
-            if(item[1]){
-                tempFiles.push(item[1])
+        for(const [key, value] of Object.entries(videos)){
+            if(value){
+                tempFiles.push(value)
             }
-        })
-        Object.entries(files).forEach(item =>{
-            if(item[1]){
-                tempFiles.push(item[1]['awsKey'])
+        }
+        for(let i = 0; i < files.length; i++){
+            const file = files[i]
+            if(file){
+                tempFiles.push(file.awsKey)
             }
-        })
+        }
         tempFiles.push(lesson.thumbNail)
         console.log(tempFiles)
         for(const item of tempFiles){
             if(item){
-                console.log(item)
                 await deleteCloudFiles(item)
             }
         }

@@ -29,7 +29,6 @@ const createLessonInEnglish = async(req, res, next) =>{
             if(files[item][0]){
                 const temp = files[item][0]
                 temp.awsKey = genKey(16) + temp.filename 
-                console.log(temp)
                 modifiedFiles.push(temp)
             }
         }
@@ -90,13 +89,10 @@ async function verifyInputs(req){
     })
     try{
         const {jsondata} = req.body 
-        if(!jsondata) throw new BadRequest("Provide all of the necessary information regarding the lssons")
+        if(!jsondata) throw new BadRequest("Provide all of the necessary information regarding the lesson")
         const parsedJson = await JSON.parse(jsondata) 
         const {error, value} = joiSchema.validate(parsedJson)
-        if(error){
-            console.log(error)
-            throw error
-        }
+        if(error) throw error
         const courseNameUppercase = parsedJson.course.toUpperCase()
         parsedJson.course = courseNameUppercase
         const files = await new Promise((resolve, reject) => {
@@ -123,7 +119,6 @@ async function verifyInputs(req){
         });
         return {jsondata: parsedJson} 
     }catch(err){
-        await deleteLocalFiles()
         throw err
     }
 }

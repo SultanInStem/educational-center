@@ -27,7 +27,6 @@ const getLesson = async (req, res, next) => {
         }
         for(const [key, value] of Object.entries(lesson.videos)){
             if(value){
-                console.log(key, value)
                 tempLesson.videos.push({lng: key, Url: getUrl(value), Key: value})
             }
         }

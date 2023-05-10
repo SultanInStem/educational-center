@@ -34,7 +34,7 @@ const changeLessonPicture = async (req, res, next) => {
         const file = req?.file 
         if(!file || file.fieldname !== 'image') throw new BadRequest("File must be provided")
         if(!lessonId) throw new BadRequest("Lesson ID must be provided")
-        verifyFile(file)
+        await verifyFile(file)
         const lesson = await Lesson.findById(lessonId, {thumbNail: 1})
         if(!lesson) throw new NotFound(`Lesson with Id ${lessonId} not found`)
         file.awsKey = genKey(16) + file.originalname

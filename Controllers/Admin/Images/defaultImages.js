@@ -5,6 +5,7 @@ const deleteCloudFiles = require('../../../helperFuncs/deleteCloudFiles')
 const { deleteLocalFiles } = require('../../../helperFuncs/deleteLocalFiles')
 const genKey = require('../../../helperFuncs/genS3Key')
 const isImage = require('../../../helperFuncs/isImage')
+const getUrl = require('../../../helperFuncs/getUrl')
 const uploadS3 = require('../../../helperFuncs/uploadFileS3')
 const { StatusCodes } = require('http-status-codes')
 
@@ -41,6 +42,15 @@ const updateDefaultImage = async(req, res, next) => {
         return next(err)
     }finally{
         await deleteLocalFiles()
+    }
+}
+
+const getDefaultImages = async (req, res, next) => {
+    try{
+        const images = await DefaultImage.find({})
+        return res.status(StatusCodes.OK).json({msg: "Here are your defualt images", images})
+    }catch(err){
+        return next(err)
     }
 }
 

@@ -50,7 +50,7 @@ const updateVideo = async(req, res, next) => {
         const updatedLesson = await Lesson.findByIdAndUpdate(lessonId, 
             {$set: {[`videos.${language}`]: file.awsKey}},
             {new: true, projection: {videos: 1}})
-        return res.status(StatusCodes.OK).json({msg: "Video has been updated"})
+        return res.status(StatusCodes.OK).json({msg: "Video has been updated successfuly"})
     }catch(err){
         return next(err)
     }finally{

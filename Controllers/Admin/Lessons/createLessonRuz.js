@@ -13,7 +13,7 @@ const fs = require('fs')
 const {
     levelsArray 
 } = require('../../../imports')
-const uploadsFolderPath = path.join(__dirname, '..', '..', 'uploads')
+const uploadsFolderPath = path.join(__dirname, '..', '..', '..', 'uploads')
 const DefaultImage = require('../../../DB/models/DefaultImage')
 const uploadToS3 = require('../../../helperFuncs/uploadFileS3')
 const deleteCloudFiles = require('../../../helperFuncs/deleteCloudFiles')
@@ -71,34 +71,31 @@ const createLessonRuz = async(req, res, next) =>{
     const modifiedFiles = [] 
     try{
         const {json} = await verifyInputs(req)
-        const files = req.files 
-        for(const item in files){
-            if(files[item][0]){
-                const temp = files[item][0]
-                const newFileName = temp.filename.replace(/[\s-]+/g, '') 
-                modifiedFiles.push({
-                    fieldname: temp.fieldname,
-                    filename: newFileName,
-                    mimetype: temp.mimetype,
-                    originalname: temp.originalname,
-                    awsKey: genKey(16) + newFileName
-                })
-            }
-        }
-
+        const files = req.files
         const lesson = new Lesson(json)
-        for(const item of modifiedFiles){
-            console.log('Item', item)
-            if(item.fieldname === 'videoRu'){
-                lesson.videos.russian = item.awsKey
-            }else if(item.fieldname === 'videoUz'){
-                lesson.videos.uzbek = item.awsKey
-            }else if(item.fieldname === 'image'){
-                lesson.thumbNail = item.awsKey
+        for(const item in files){
+            const file = files[item][0]
+            if(file){
+                file.awsKey = genKey(16) + file.filename 
+                const response = await uploadToS3(file, "inline")
+                console.log(response)
+                const fieldname = file.fieldname 
+                switch(fieldname){
+                    case "videoRu": 
+                    lesson.videos['russian'] = file.awsKey 
+                    break; 
+                    case "videoUz": 
+                    lesson.videos['uzbek'] = file.awsKey 
+                    break; 
+                    case "image":
+                    lesson.thumbNail = file.awsKey 
+                    break; 
+                    default: 
+                    console.log('smth is off')
+                }
             }
-            const response = await uploadToS3(item)
-            console.log(response)
         }
+        
         if(lesson.thumbNail.length < 1){
             const defaultImage = await DefaultImage.findOne({role: 'lesson'})
             lesson.thumbNail = defaultImage.awsKey 
