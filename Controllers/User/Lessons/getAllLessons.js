@@ -44,8 +44,9 @@ const getAllLessons = async (req, res, next) => {
             }
             filteredLessons.push(obj)
         }
+        const profilePicture = getUrl(user.profilePicture)
         const score = user.completedCourses.includes(course._id) ? 1 : user.currentScore
-        return res.status(StatusCodes.OK).json({lessons: filteredLessons, currentScore: score})
+        return res.status(StatusCodes.OK).json({lessons: filteredLessons, currentScore: score, profilePicture})
     }catch(err){
         return next(err) 
     }
