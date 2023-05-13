@@ -56,7 +56,7 @@ const getLesson = async(req, res, next) =>{
             course: courseName
         }
         const profilePicture = getUrl(user.profilePicture)
-        return res.status(StatusCodes.OK).json({lesson: tempLesson, profilePicture})
+        return res.status(StatusCodes.OK).json({lesson: tempLesson, profilePicture, userId})
     }catch(err){
         return next(err)
     }

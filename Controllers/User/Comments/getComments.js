@@ -24,6 +24,7 @@ async function verifyQuery(query){
 }
 
 const getComments = async (req, res, next) =>{
+    const userId = req.userId
     try{ 
         if(req.query.lim && req.query.skip){
             req.query.lim = Number(req.query.lim)
@@ -46,7 +47,8 @@ const getComments = async (req, res, next) =>{
                 comment: comment.comment,
                 userPicture: "",
                 username: "",
-                useremail: ""
+                useremail: "",
+                createdBy: comment.createdBy
             }
             if(!hashMap[comment.createdBy]){
                 const user = await User.findById(comment.createdBy, {profilePicture: 1, name: 1, email: 1})
@@ -71,7 +73,7 @@ const getComments = async (req, res, next) =>{
                 data.push(tempComment)
             }
         }
-        return res.status(StatusCodes.OK).json({number: comments.length, comments: data})
+        return res.status(StatusCodes.OK).json({number: comments.length, comments: data, userId})
     }catch(err){
         return next(err)
     }
