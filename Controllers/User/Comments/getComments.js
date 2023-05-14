@@ -4,7 +4,7 @@ const User = require('../../../DB/models/User')
 const getUrl = require('../../../helperFuncs/getUrl')
 const { StatusCodes } = require('http-status-codes')
 const joi = require('joi')
-const { BadRequest } = require('../../../Error/ErrorSamples')
+const { BadRequest, NotFound } = require('../../../Error/ErrorSamples')
 
 async function verifyQuery(query){
     try{
@@ -48,7 +48,9 @@ const getComments = async (req, res, next) =>{
                 userPicture: "",
                 username: "",
                 useremail: "",
-                createdBy: comment.createdBy
+                createdBy: comment.createdBy,
+                isLiked: undefined,
+                isDisliked: undefined
             }
             if(!hashMap[comment.createdBy]){
                 const user = await User.findById(comment.createdBy, {profilePicture: 1, name: 1, email: 1})
@@ -64,12 +66,16 @@ const getComments = async (req, res, next) =>{
                 tempComment.userPicture = tempUser.profilePicture 
                 tempComment.username = tempUser.name
                 tempComment.useremail = tempUser.email
+                tempComment.isLiked = comment.usersLiked[userId] ? true : false 
+                tempComment.isDisliked = comment.usersDisliked[userId] ? true : false
                 data.push(tempComment)
             }else if(hashMap[comment.createdBy]){
                 const user = hashMap[comment.createdBy]
                 tempComment.userPicture = user.profilePicture 
                 tempComment.username = user.name 
                 tempComment.useremail = user.email
+                tempComment.isLiked = comment.usersLiked[userId] ? true : false 
+                tempComment.isDisliked = comment.usersDisliked[userId] ? true : false
                 data.push(tempComment)
             }
         }

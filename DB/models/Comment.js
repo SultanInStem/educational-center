@@ -19,7 +19,15 @@ const CommentSchema = new mongoose.Schema({
     disLikes: {
         type: Array,
         default: []
-    }    
+    },
+    usersLiked:{
+        type: Object,
+        default: {}
+    },
+    usersDisliked: {
+        type: Object,
+        default: {}
+    }
 }, {timestamps: true})
 
 const Comment = mongoose.model('comments', CommentSchema)

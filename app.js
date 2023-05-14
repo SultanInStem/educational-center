@@ -59,7 +59,7 @@ app.use('/api/v1', router)
 app.use(ErrorHandler)
 app.use(NotFound)
 
-
+const User = require('./DB/models/User')
 const start = async() =>{  
     try{
         await connect(process.env.MONGO_URI)
@@ -73,4 +73,4 @@ const start = async() =>{
         console.log(err)
     }
 }
-start() 
+start()
