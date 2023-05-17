@@ -31,7 +31,7 @@ app.use('/api/v1/admin', verifyAdmin, AdminRouter)
 
 app.use(ErrorHandler)
 app.use(NotFound)
-const Quote = require('./DB/models/Quote')
+
 const start = async() =>{  
     try{
         await connect(process.env.MONGO_URI)
