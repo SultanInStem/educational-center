@@ -36,7 +36,7 @@ const getComments = async (req, res, next) =>{
         if(!lessonId) throw new BadRequest("Lesson ID is missing")
         const lesson = await Lesson.findById(lessonId, {comments: 1})
         if(!lesson) throw new NotFound(`Lesson with Id ${lessonId} not found`)
-        const comments = await Comment.find({lessonId: lessonId}).sort({createdAt: 1}).limit(lim).skip(skip) 
+        const comments = await Comment.find({lessonId: lessonId}).sort({createdAt: -1}).limit(lim).skip(skip) 
         const data = []
         const hashMap = {} 
         for(const comment of comments){
