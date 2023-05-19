@@ -24,6 +24,16 @@ const getStats = async (req, res, next) =>{
                 femaleUsers += 1
             }
         }
+        const ageGroups = await User.aggregate([
+            {
+                $group: {
+                  _id: "$age",
+                  count: { $sum: 1 }
+                }
+            }
+        ])
+
+        console.log(ageGroups)
         admin.profilePicture = getUrl(admin.profilePicture)
         return res.status(StatusCodes.OK).json({
             lessons: lessons.length,
@@ -32,7 +42,8 @@ const getStats = async (req, res, next) =>{
             femaleUsers,
             activeUsers,
             courses: 6,
-            admin
+            admin,
+            ageGroups
         })
     }catch(err){
         return next(err)
