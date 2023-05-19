@@ -7,7 +7,15 @@ const getAllCourses = async(req, res, next) =>{
     const userId = req.userId 
     try{
         const courses = await Course.find({}, {lessons: 0}) 
-        const user = await User.findById(userId, { name: 1, profilePicture: 1, progressScore: 1, email: 1, course: 1, completedCourses: 1})
+        const user = await User.findById(userId, { 
+            name: 1, 
+            profilePicture: 1, 
+            progressScore: 1, 
+            email: 1, 
+            course: 1, 
+            completedCourses: 1, 
+            isAdmin: 1
+        })
         if(!user) throw new NotFound("User not found")
         const profileImageUrl = getUrl(user.profilePicture) // set up default url 
         user.profilePicture = profileImageUrl
