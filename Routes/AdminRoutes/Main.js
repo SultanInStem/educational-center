@@ -10,6 +10,7 @@ const CoursesRouter = require('./Courses')
 const CommentRouter = require('./Comments')
 const QuoteRouter = require('./Quotes')
 const HomeworkRouter = require('./Homework')
+const AdminRouter = require('./EditUser')
 
 router.use('/lessons', LessonRouter)
 router.use('/lessons/files', FilesRouter)
@@ -20,5 +21,6 @@ router.use('/courses', CoursesRouter)
 router.use('/homework', HomeworkRouter)
 router.use('/comments', CommentRouter)
 router.use('/quotes', QuoteRouter)
+router.use('/', AdminRouter)
 
 module.exports = router
