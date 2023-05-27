@@ -11,7 +11,8 @@ async function verifyUserProgress(userId, courseName){
             completedCourses: 1,
             currentScore: 1,
             isAdmin: 1,
-            course: 1
+            course: 1,
+            canComment: 1
         })
         if(!user) throw new NotFound("User not Found")
         const course = await Course.findOne({name: courseName})

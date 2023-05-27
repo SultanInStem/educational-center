@@ -9,7 +9,7 @@ const searchUser = async(req, res, next) =>{
             {email: {$regex: q}},
             {gender: {$regex: q}},
             {course: {$regex: q}}
-        ]}, {name: 1, email: 1, gender: 1, course: 1, profilePicture: 1})
+        ]}, {name: 1, email: 1, gender: 1, course: 1, profilePicture: 1, isActive: 1})
         for(const user of users){
             if(user.profilePicture){
                 user.profilePicture = getUrl(user.profilePicture)
