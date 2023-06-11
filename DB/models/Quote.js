@@ -6,10 +6,6 @@ const QuoteSchema = new mongoose.Schema({
         type: String,
         required: true 
     },
-    isMain: {
-        type: Boolean,
-        default: false 
-    },
     author: {
         type: String,
         required: true
