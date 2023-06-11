@@ -4,9 +4,8 @@ const { NotFound, BadRequest } = require('../../../../Error/ErrorSamples')
 const joi = require('joi')
 const User = require('../../../../DB/models/User')
 const jwt = require('jsonwebtoken')
-const emailExpTime = process.env.PASSWORD_RECOVERY_EMAIL_EXPIRATION_TIME 
 const genToken = (payload) => {
-    return jwt.sign({...payload}, process.env.EMAIL_JWT_HASH, {expiresIn: '1d'})
+    return jwt.sign({...payload}, process.env.EMAIL_JWT_HASH, {expiresIn: process.env.PASSWORD_RECOVERY_EMAIL_EXPIRATION_TIME})
 }
 const genVerificationUrl = (token) => {
     const url = process.env.PASSWORD_CHANGE_CLIENT_DOMAIN + `/${token}`

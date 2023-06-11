@@ -54,4 +54,7 @@ const getDefaultImages = async (req, res, next) => {
     }
 }
 
-module.exports = updateDefaultImage
+module.exports = {
+    updateDefaultImage,
+    getDefaultImages
+}
