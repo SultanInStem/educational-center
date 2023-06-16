@@ -48,10 +48,17 @@ const updateDefaultImage = async(req, res, next) => {
 const getDefaultImages = async (req, res, next) => {
     try{
         const images = await DefaultImage.find({})
+        const newImages = []
         for(let i = 0; i < images.length; i++){
-            images[i]['imageUrl'] = getUrl(images[i]['awsKey'])
+            const obj = {
+                awsKey: images[i]['awsKey'],
+                _id: images[i]['_id'],
+                role: images[i]['role'],
+                imageUrl: getUrl(images[i]['awsKey'])
+            }
+            newImages.push(obj)
         }
-        return res.status(StatusCodes.OK).json({msg: "Here are your defualt images", images})
+        return res.status(StatusCodes.OK).json({msg: "Here are your defualt images", images: newImages})
     }catch(err){
         return next(err)
     }
