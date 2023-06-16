@@ -48,6 +48,9 @@ const updateDefaultImage = async(req, res, next) => {
 const getDefaultImages = async (req, res, next) => {
     try{
         const images = await DefaultImage.find({})
+        for(let i = 0; i < images.length; i++){
+            images[i]['imageUrl'] = getUrl(images[i]['awsKey'])
+        }
         return res.status(StatusCodes.OK).json({msg: "Here are your defualt images", images})
     }catch(err){
         return next(err)
